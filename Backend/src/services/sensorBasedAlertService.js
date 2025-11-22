@@ -24,9 +24,43 @@ class SensorBasedAlertService {
         const sensorsSnapshot = await sensorsRef.once("value");
         if (sensorsSnapshot.exists()) {
           const sensorsData = sensorsSnapshot.val();
-          Object.assign(allSensors, sensorsData);
+
+          // ✅ Đảm bảo mỗi sensor có đầy đủ thông tin và source
+          for (const [sensorId, sensorData] of Object.entries(sensorsData)) {
+            if (
+              sensorData &&
+              (sensorData.latitude || sensorData.lat) &&
+              (sensorData.longitude || sensorData.lon)
+            ) {
+              allSensors[sensorId] = {
+                ...sensorData,
+                source: sensorData.source || "sensors", // Đảm bảo có source
+                // ✅ Đảm bảo có cả latitude/longitude và lat/lon
+                latitude: sensorData.latitude || sensorData.lat,
+                longitude: sensorData.longitude || sensorData.lon,
+                // ✅ Bán kính ảnh hưởng của sensor (mặc định 1000m nếu không có)
+                radius: sensorData.radius || 1000,
+              };
+              console.log(
+                `   ✅ Sensor ${sensorId}: ${allSensors[sensorId].latitude}, ${
+                  allSensors[sensorId].longitude
+                }, flood_status: ${
+                  sensorData.flood_status || "NORMAL"
+                }, water_level_cm: ${sensorData.water_level_cm || 0}, radius: ${
+                  allSensors[sensorId].radius
+                }m`
+              );
+            } else {
+              console.warn(`   ⚠️ Sensor ${sensorId} bỏ qua: thiếu tọa độ`);
+            }
+          }
+
           console.log(
-            `📡 Đọc ${Object.keys(sensorsData).length} sensors từ /sensors`
+            `📡 Đọc ${
+              Object.keys(allSensors).length
+            } sensors từ /sensors (tổng: ${
+              Object.keys(sensorsData).length
+            } sensors trong DB)`
           );
         }
       } catch (error) {
@@ -44,6 +78,8 @@ class SensorBasedAlertService {
             allSensors[`iot_${sensorId}`] = {
               ...data,
               source: "iotData",
+              // ✅ Bán kính ảnh hưởng của IoT sensor (mặc định 1000m nếu không có)
+              radius: data.radius || 1000,
             };
           }
           console.log(
@@ -81,6 +117,7 @@ class SensorBasedAlertService {
                 timestamp: zoneData.last_updated || Date.now(),
                 source: "flood_zones",
                 zone_id: zoneId,
+                radius: zoneData.radius || 1000, // ✅ Bán kính ảnh hưởng của flood zone (mặc định 1000m)
               };
             }
           }
@@ -213,8 +250,14 @@ class SensorBasedAlertService {
 
   /**
    * Tính khoảng cách giữa 2 điểm GPS (km)
+   * ✅ Xử lý trường hợp tọa độ giống hệt nhau (trả về 0)
    */
   calculateDistance(lat1, lon1, lat2, lon2) {
+    // ✅ Nếu tọa độ giống hệt nhau, trả về 0 ngay
+    if (lat1 === lat2 && lon1 === lon2) {
+      return 0; // 0 km = 0m
+    }
+
     const R = 6371; // km
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -285,21 +328,36 @@ class SensorBasedAlertService {
 
       const distanceMeters = Math.round(distance * 1000);
 
+      // ✅ Log chi tiết để debug
+      const isExactMatch = locLat === sensLat && locLon === sensLon;
+      if (isExactMatch) {
+        console.log(
+          `   🎯 TỌA ĐỘ GIỐNG HỆT! Location "${location.name}" và sensor ${sensorId} cùng tọa độ: ${locLat},${locLon}`
+        );
+      }
+
       console.log(
         `   📏 Khoảng cách từ "${location.name}" đến sensor ${sensorId}: ${distanceMeters}m (tọa độ: ${locLat},${locLon} → ${sensLat},${sensLon})`
       );
 
       // Tính phần trăm mực nước
       const waterPercent =
-        sensorData.current_percent ||
-        Math.round((sensorData.water_level_cm / 100) * 100);
+        sensorData.current_percent !== undefined
+          ? sensorData.current_percent
+          : sensorData.water_level_cm !== undefined
+          ? Math.round((sensorData.water_level_cm / 100) * 100)
+          : 0;
 
-      const waterLevelCm = sensorData.water_level_cm || 0;
-      const floodStatus =
+      // ✅ Đảm bảo water_level_cm là số
+      const waterLevelCm = parseFloat(sensorData.water_level_cm) || 0;
+
+      // ✅ Đọc flood_status từ nhiều nguồn có thể
+      const floodStatus = (
         sensorData.flood_status ||
         sensorData.status ||
         sensorData.alert_status ||
-        "NORMAL";
+        "NORMAL"
+      ).toUpperCase();
 
       console.log(
         `   🔍 Sensor ${sensorId} (${
@@ -307,13 +365,30 @@ class SensorBasedAlertService {
         }): ${distanceMeters}m, mực nước ${waterLevelCm}cm (${waterPercent}%), trạng thái: ${floodStatus}`
       );
 
-      // ✅ Kiểm tra điều kiện: trong bán kính VÀ có dấu hiệu ngập
-      // Gửi cảnh báo nếu:
-      // 1. Mực nước >= ngưỡng, HOẶC
-      // 2. Trạng thái cảnh báo (WARNING, DANGER, CRITICAL, ALERT), HOẶC
-      // 3. Mực nước > 0 (có nước dù chưa vượt ngưỡng) - để phát hiện sớm, HOẶC
-      // 4. Là mock data (flood prone area) - khu vực dễ ngập, luôn cảnh báo nếu trong bán kính
-      const isInRadius = distanceMeters <= alertRadius;
+      // ✅ QUAN TRỌNG: Dùng BÁN KÍNH CỦA SENSOR/MOCK DATA để check, không dùng alertRadius của location
+      // Logic: Check xem location có nằm trong bán kính ảnh hưởng của sensor/mock data không
+      // - Mock data: dùng radius từ zone.radius (mặc định 500m)
+      // - Sensor: dùng radius từ sensorData.radius (nếu có), nếu không có thì dùng mặc định 1000m
+      // - Flood zones: dùng radius từ zoneData.radius (nếu có), nếu không có thì dùng mặc định 1000m
+
+      let sensorRadius;
+      if (sensorData.radius !== undefined && sensorData.radius !== null) {
+        // Sensor/mock data có radius riêng
+        sensorRadius = parseFloat(sensorData.radius);
+      } else if (sensorData.source === "floodProneAreas_json") {
+        // Mock data từ JSON: mặc định 500m
+        sensorRadius = 500;
+      } else if (sensorData.source === "flood_zones") {
+        // Flood zones từ Firebase: mặc định 1000m
+        sensorRadius = 1000;
+      } else {
+        // Sensor thực tế: mặc định 1000m (1km)
+        sensorRadius = 1000;
+      }
+
+      // ✅ Check: location có nằm trong bán kính ảnh hưởng của sensor/mock data không
+      const isInSensorRadius = distanceMeters <= sensorRadius;
+
       const isMockData = sensorData.source === "floodProneAreas_json";
       const isFloodAlerting = [
         "WARNING",
@@ -324,11 +399,22 @@ class SensorBasedAlertService {
       const exceedsThreshold = waterLevelCm >= waterLevelThresholdCm;
       const hasWater = waterLevelCm > 0; // Có nước dù chưa vượt ngưỡng
 
-      // ⭐ QUAN TRỌNG: Gửi cảnh báo nếu có BẤT KỲ dấu hiệu ngập nào
+      // ⭐ QUAN TRỌNG: Gửi cảnh báo nếu location nằm trong bán kính sensor VÀ có dấu hiệu ngập
       // Đặc biệt: Mock data (flood prone areas) luôn cảnh báo nếu trong bán kính
       const shouldAlert =
-        isInRadius &&
+        isInSensorRadius &&
         (exceedsThreshold || isFloodAlerting || hasWater || isMockData); // Mock data luôn cảnh báo nếu trong bán kính
+
+      // ✅ Log chi tiết điều kiện check
+      console.log(
+        `   🔍 [CHECK] Sensor ${sensorId}: ` +
+          `isInSensorRadius=${isInSensorRadius} (${distanceMeters}m <= ${sensorRadius}m [bán kính sensor]), ` +
+          `isFloodAlerting=${isFloodAlerting} (${floodStatus}), ` +
+          `exceedsThreshold=${exceedsThreshold} (${waterLevelCm}cm >= ${waterLevelThresholdCm}cm), ` +
+          `hasWater=${hasWater} (${waterLevelCm}cm > 0), ` +
+          `isMockData=${isMockData}, ` +
+          `shouldAlert=${shouldAlert}`
+      );
 
       if (shouldAlert) {
         let reason;
@@ -354,27 +440,32 @@ class SensorBasedAlertService {
           waterPercent: waterPercent,
           floodStatus: floodStatus,
           coords: {
-            lat: sensorData.latitude,
-            lon: sensorData.longitude,
+            lat: sensLat, // ✅ Dùng tọa độ đã parse
+            lon: sensLon, // ✅ Dùng tọa độ đã parse
           },
           timestamp:
             sensorData.timestamp || sensorData.last_updated || Date.now(),
           alertReason: reason,
           source: sensorData.source || "sensors", // Nguồn dữ liệu
         });
-      } else if (isInRadius) {
+      } else if (isInSensorRadius) {
         // Log lý do không cảnh báo để debug
         console.log(
-          `   ⏭️ Sensor ${sensorId} trong bán kính nhưng không cảnh báo: ` +
+          `   ⏭️ Sensor ${sensorId} trong bán kính sensor (${sensorRadius}m) nhưng không cảnh báo: ` +
             `mực nước ${waterLevelCm}cm (ngưỡng: ${waterLevelThresholdCm}cm), ` +
             `trạng thái ${floodStatus}, không có dấu hiệu ngập`
+        );
+      } else {
+        // Location nằm ngoài bán kính của sensor
+        console.log(
+          `   ⏭️ Sensor ${sensorId} nằm ngoài bán kính: ${distanceMeters}m > ${sensorRadius}m (bán kính sensor)`
         );
       }
     }
 
     if (nearbyFloods.length === 0) {
       console.log(
-        `   ✅ Không có sensor nào vượt ngưỡng ${waterLevelThresholdCm}cm trong bán kính ${alertRadius}m`
+        `   ✅ Không có sensor nào cảnh báo trong bán kính ảnh hưởng của chúng`
       );
     }
 
