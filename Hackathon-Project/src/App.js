@@ -18,6 +18,7 @@ import Profile from "./pages/Profile";
 import AdminPage from "./pages/AdminPage";
 import APIDemo from "./pages/APIDemo";
 import SensorsPage from "./pages/SensorsPage";
+import AutoAlertPage from "./pages/AutoAlertPage";
 import authService from "./services/authService";
 import floodData from "./data/floodProneAreas.json";
 import TopNavigation from "./components/TopNavigation";
@@ -313,7 +314,7 @@ function App() {
                   <>
                     {/* Top Navigation - Modern UI */}
                     <TopNavigation user={user} onLogout={handleLogout} />
-                    
+
                     <div className="map-container-fullscreen">
                       <MapViewRefactored
                         places={places}
@@ -386,6 +387,16 @@ function App() {
 
         {/* Sensors Page - PUBLIC - Hiển thị 2 sensors SENSOR_ROAD và SENSOR_SEWER */}
         <Route path="/sensors" element={<SensorsPage />} />
+
+        {/* Auto Alert Page - PROTECTED */}
+        <Route
+          path="/auto-alert"
+          element={
+            <ProtectedRoute user={user}>
+              <AutoAlertPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
