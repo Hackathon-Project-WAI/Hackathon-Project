@@ -167,7 +167,9 @@ const ProfilePage = () => {
         let newStatus = null;
         if (floodZones.length > 0) {
           const hasHighRisk = floodZones.some((z) => z.riskLevel === "high");
-          const hasMediumRisk = floodZones.some((z) => z.riskLevel === "medium");
+          const hasMediumRisk = floodZones.some(
+            (z) => z.riskLevel === "medium"
+          );
 
           if (hasHighRisk) {
             newStatus = "critical";
@@ -179,7 +181,9 @@ const ProfilePage = () => {
         }
         // Nếu không có flood zone thì để null (sẽ hiển thị là safe)
 
-        console.log(`✅ Updated status cho "${loc.name}": ${newStatus || "safe"}`);
+        console.log(
+          `✅ Updated status cho "${loc.name}": ${newStatus || "safe"}`
+        );
 
         return {
           ...loc,
@@ -615,11 +619,13 @@ const ProfilePage = () => {
                                 locationCategories.find(
                                   (c) => c.id === loc.type
                                 ) || locationCategories[0];
-                              
+
                               // Xác định status hiển thị (ưu tiên last_alert_status)
-                              const displayStatus = loc.last_alert_status || "safe";
-                              const isSafe = !displayStatus || displayStatus === "safe";
-                              
+                              const displayStatus =
+                                loc.last_alert_status || "safe";
+                              const isSafe =
+                                !displayStatus || displayStatus === "safe";
+
                               return (
                                 <div
                                   key={loc.id}

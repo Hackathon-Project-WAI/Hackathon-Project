@@ -16,8 +16,8 @@ class FirebaseController {
         });
       }
 
-      // Đọc từ iotData thay vì sensors/flood
-      const data = await firebaseClient.readData("iotData");
+      // Đọc từ sensors thay vì iotData
+      const data = await firebaseClient.readData("sensors");
       res.json({ success: true, data });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -31,8 +31,8 @@ class FirebaseController {
   async getSensorById(req, res) {
     try {
       const { sensorId } = req.params;
-      // Đọc từ iotData thay vì sensors/flood
-      const data = await firebaseClient.readData(`iotData/${sensorId}`);
+      // Đọc từ sensors thay vì iotData
+      const data = await firebaseClient.readData(`sensors/${sensorId}`);
       res.json({ success: true, data });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });

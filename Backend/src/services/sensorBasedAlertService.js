@@ -10,7 +10,7 @@ class SensorBasedAlertService {
   async getAllSensors() {
     try {
       const db = admin.database();
-      const sensorsRef = db.ref("iotData");
+      const sensorsRef = db.ref("sensors");
       const snapshot = await sensorsRef.once("value");
 
       if (!snapshot.exists()) {
@@ -45,14 +45,24 @@ class SensorBasedAlertService {
 
   /**
    * Kiểm tra nguy cơ ngập cho 1 location dựa trên sensors
+   * @param {Object} location - Thông tin location
+   * @param {Object} sensors - Dữ liệu sensors từ Firebase
+   * @param {Object} userSettings - Cài đặt cảnh báo của user
    */
-  async checkLocationWithSensors(location, sensors) {
+  async checkLocationWithSensors(location, sensors, userSettings = {}) {
     const nearbyFloods = [];
-    const alertRadius = location.alertRadius || 20; // ✅ Mặc định 20m (thay vì 1000m)
+    const alertRadius = location.alertRadius || 1000; // Mặc định 1000m (1km)
+    
+    // ✅ Lấy ngưỡng từ USER SETTINGS (cm)
+    const waterLevelThresholdCm = userSettings.waterLevelThreshold || 50;
+    
+    // Chuyển đổi cm → % (giả sử max = 100cm)
+    const waterLevelThresholdPercent = (waterLevelThresholdCm / 100) * 100;
 
     console.log(`📍 Kiểm tra location: ${location.name}`);
     console.log(`   Tọa độ: ${location.coords.lat}, ${location.coords.lon}`);
     console.log(`   Bán kính cảnh báo: ${alertRadius}m`);
+    console.log(`   Ngưỡng mực nước: ${waterLevelThresholdCm}cm (${waterLevelThresholdPercent}%)`);
 
     for (const [sensorId, sensorData] of Object.entries(sensors)) {
       if (!sensorData.latitude || !sensorData.longitude) {
@@ -72,12 +82,14 @@ class SensorBasedAlertService {
       // Tính phần trăm mực nước
       const waterPercent = sensorData.current_percent || 
                           Math.round((sensorData.water_level_cm / 100) * 100);
+      
+      const waterLevelCm = sensorData.water_level_cm || 0;
 
-      console.log(`   🔍 Sensor ${sensorId}: ${distanceMeters}m, mực nước ${waterPercent}%`);
+      console.log(`   🔍 Sensor ${sensorId}: ${distanceMeters}m, mực nước ${waterLevelCm}cm (${waterPercent}%)`);
 
-      // Nếu trong bán kính và có nguy cơ
-      if (distanceMeters <= alertRadius && waterPercent >= 25) { // ✅ Giảm ngưỡng xuống 25% để dễ test
-        console.log(`   ⚠️ CẢNH BÁO: Sensor ${sensorId} trong bán kính ${alertRadius}m!`);
+      // ✅ Kiểm tra điều kiện: trong bán kính VÀ vượt ngưỡng (theo CM)
+      if (distanceMeters <= alertRadius && waterLevelCm >= waterLevelThresholdCm) {
+        console.log(`   ⚠️ CẢNH BÁO: Sensor ${sensorId} vượt ngưỡng ${waterLevelThresholdCm}cm!`);
         nearbyFloods.push({
           sensorId: sensorId,
           sensorName: sensorData.device_id || sensorId,
@@ -95,7 +107,7 @@ class SensorBasedAlertService {
     }
 
     if (nearbyFloods.length === 0) {
-      console.log(`   ✅ Không có sensor nguy hiểm trong bán kính ${alertRadius}m`);
+      console.log(`   ✅ Không có sensor nào vượt ngưỡng ${waterLevelThresholdCm}cm trong bán kính ${alertRadius}m`);
     }
 
     // Sắp xếp theo khoảng cách
@@ -111,7 +123,27 @@ class SensorBasedAlertService {
     try {
       const db = admin.database();
       
-      // 1. Lấy user info từ Firebase Auth
+      // 1. Lấy USER SETTINGS (ngưỡng cảnh báo) - ✅ ĐỌC TỪ ĐÚNG PATH
+      // Frontend lưu vào: userProfiles/{userId}/autoAlertSettings
+      const settingsRef = db.ref(`userProfiles/${userId}/autoAlertSettings`);
+      const settingsSnapshot = await settingsRef.once("value");
+      
+      let userSettings = {
+        waterLevelThreshold: 50, // Mặc định 50cm
+        riskLevelThreshold: 1,   // Mặc định: warning (1)
+      };
+      
+      if (settingsSnapshot.exists()) {
+        const settings = settingsSnapshot.val();
+        userSettings = {
+          waterLevelThreshold: settings.waterLevelThreshold || 50,
+          riskLevelThreshold: settings.riskLevelThreshold || 1,
+        };
+      }
+      
+      console.log(`⚙️ User Settings (từ autoAlertSettings):`, userSettings);
+      
+      // 2. Lấy user info từ Firebase Auth
       let userEmail = "";
       let userName = "Người dùng";
       
@@ -138,13 +170,16 @@ class SensorBasedAlertService {
         userId: userId,
         name: userName,
         email: userEmail,
+        settings: userSettings, // ✅ Thêm settings vào user object
       };
 
       console.log(`👤 User info:`, {
         userId,
         name: user.name,
         email: user.email || '❌ KHÔNG CÓ EMAIL',
-        hasEmail: !!user.email
+        hasEmail: !!user.email,
+        waterLevelThreshold: userSettings.waterLevelThreshold + 'cm',
+        riskLevel: userSettings.riskLevelThreshold,
       });
 
       // 2. Lấy locations
@@ -189,11 +224,15 @@ class SensorBasedAlertService {
 
       console.log(`📊 Đang check ${locations.length} locations với ${Object.keys(sensors).length} sensors`);
 
-      // 4. Check từng location
+      // 4. Check từng location với USER SETTINGS
       const alerts = [];
 
       for (const location of locations) {
-        const nearbyFloods = await this.checkLocationWithSensors(location, sensors);
+        const nearbyFloods = await this.checkLocationWithSensors(
+          location, 
+          sensors,
+          userSettings // ✅ Truyền settings của user
+        );
 
         if (nearbyFloods.length > 0) {
           console.log(`⚠️ Location "${location.name}" có ${nearbyFloods.length} sensors gần đang cảnh báo!`);

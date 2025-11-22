@@ -85,8 +85,14 @@ class FirebaseClient {
   async readData(path) {
     try {
       const db = this.getDatabase();
+      console.log(`📖 Reading from Firebase path: /${path}`);
       const snapshot = await db.ref(path).once("value");
-      return snapshot.val();
+      const data = snapshot.val();
+      console.log(
+        `✅ Data from /${path}:`,
+        data ? `Found ${Object.keys(data || {}).length} items` : "NULL/EMPTY"
+      );
+      return data;
     } catch (error) {
       console.error(`❌ Lỗi đọc dữ liệu từ ${path}:`, error.message);
       throw error;

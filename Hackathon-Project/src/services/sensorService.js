@@ -73,22 +73,31 @@ class SensorService {
       }
 
       const sensors = Object.entries(data).map(([id, sensor]) => {
+        // Log tọa độ thô từ Firebase
+        console.log(`📍 RAW COORDINATES from Firebase for sensor "${id}":`, {
+          latitude: sensor.latitude,
+          longitude: sensor.longitude,
+          latitude_type: typeof sensor.latitude,
+          longitude_type: typeof sensor.longitude,
+        });
+
         // Sensor được coi là "ngập" nếu:
         // 1. Có water_level_cm > 0 (nước đang tăng)
         // 2. HOẶC flood_status khác "NO_FLOOD" (bao gồm cả SENSOR_ERROR với water_level > 0)
         const waterLevel = sensor.water_level_cm || 0;
         const hasWater = waterLevel > 0;
-        const hasFloodStatus = sensor.flood_status && sensor.flood_status !== "NO_FLOOD";
-        
+        const hasFloodStatus =
+          sensor.flood_status && sensor.flood_status !== "NO_FLOOD";
+
         const isFlooded = hasWater || hasFloodStatus;
-        
+
         console.log(`📡 Sensor ${id}:`, {
           flood_status: sensor.flood_status,
           water_level: sensor.water_level_cm,
           hasWater: hasWater,
           hasFloodStatus: hasFloodStatus,
           isFlooded: isFlooded,
-          coords: { lat: sensor.latitude, lng: sensor.longitude }
+          coords: { lat: sensor.latitude, lng: sensor.longitude },
         });
 
         return {
@@ -98,7 +107,11 @@ class SensorService {
         };
       });
 
-      console.log(`🌊 Total sensors: ${sensors.length}, Flooded: ${sensors.filter(s => s.isFlooded).length}`);
+      console.log(
+        `🌊 Total sensors: ${sensors.length}, Flooded: ${
+          sensors.filter((s) => s.isFlooded).length
+        }`
+      );
       callback(sensors);
     });
 
@@ -151,10 +164,10 @@ class SensorService {
    */
   sensorsToFloodZones(sensors, radius = 20) {
     console.log(`🔄 Converting ${sensors.length} sensors to flood zones...`);
-    
+
     const floodedSensors = sensors.filter((sensor) => sensor.isFlooded);
     console.log(`✅ Found ${floodedSensors.length} flooded sensors`);
-    
+
     const zones = floodedSensors.map((sensor) => {
       const zone = {
         id: sensor.id,
@@ -165,13 +178,16 @@ class SensorService {
           lng: sensor.longitude,
         },
         radius: radius, // 20 mét
-        riskLevel: this.getFloodRiskLevel(sensor.flood_status, sensor.water_level_cm),
+        riskLevel: this.getFloodRiskLevel(
+          sensor.flood_status,
+          sensor.water_level_cm
+        ),
         waterLevel: sensor.water_level_cm || 0,
         floodStatus: sensor.flood_status,
         timestamp: sensor.timestamp,
         type: "sensor", // Đánh dấu đây là flood zone từ sensor
       };
-      
+
       console.log(`🔵 Created flood zone:`, {
         id: zone.id,
         name: zone.name,
@@ -179,12 +195,12 @@ class SensorService {
         radius: zone.radius,
         riskLevel: zone.riskLevel,
         waterLevel: zone.waterLevel,
-        floodStatus: zone.floodStatus
+        floodStatus: zone.floodStatus,
       });
-      
+
       return zone;
     });
-    
+
     return zones;
   }
 
@@ -200,13 +216,13 @@ class SensorService {
       console.log(`🔴 High risk: water level ${waterLevel}cm > 50cm`);
       return "high";
     }
-    
+
     // Nếu mực nước 30-50cm → nguy hiểm trung bình (MÀU VÀNG)
     if (waterLevel > 30) {
       console.log(`🟡 Medium risk: water level ${waterLevel}cm (30-50cm)`);
       return "medium";
     }
-    
+
     // Nếu mực nước 10-30cm → nguy hiểm thấp (MÀU XANH)
     if (waterLevel > 10) {
       console.log(`🟢 Low risk: water level ${waterLevel}cm (10-30cm)`);
@@ -216,7 +232,11 @@ class SensorService {
     // Nếu không có water_level, dựa vào flood_status
     if (!floodStatus || floodStatus === "NO_FLOOD") return "low";
 
-    if (floodStatus.includes("CRITICAL") || floodStatus.includes("SEVERE") || floodStatus.includes("DANGER")) {
+    if (
+      floodStatus.includes("CRITICAL") ||
+      floodStatus.includes("SEVERE") ||
+      floodStatus.includes("DANGER")
+    ) {
       console.log(`🔴 High risk: flood status = ${floodStatus}`);
       return "high";
     }
