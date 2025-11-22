@@ -2,12 +2,17 @@ import React, { useState, useEffect } from "react";
 import "./FloodAlert.css";
 import weatherService from "../services/weatherService";
 import floodPredictionService from "../services/floodPredictionService";
+import { sendFloodAlert } from "../services/emailService";
 
 function FloodAlert() {
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [userEmail, setUserEmail] = useState("");
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [emailStatus, setEmailStatus] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     fetchFloodPredictions();
@@ -65,6 +70,47 @@ function FloodAlert() {
     return classes[floodRisk] || "safe";
   };
 
+  const handleSendEmailAlert = async (alertItem) => {
+    if (!userEmail) {
+      setEmailStatus("error");
+      setTimeout(() => setEmailStatus(""), 3000);
+      return;
+    }
+
+    setSendingEmail(true);
+    setEmailStatus("");
+
+    try {
+      const alertData = {
+        district: alertItem.area.name,
+        level: alertItem.prediction.floodRisk === 3 ? "Rất cao" : 
+               alertItem.prediction.floodRisk === 2 ? "Cao" : 
+               alertItem.prediction.floodRisk === 1 ? "Trung bình" : "Thấp",
+        rainfall: `${alertItem.prediction.details.rainfall3h}`,
+        time: new Date().toLocaleString('vi-VN')
+      };
+
+      const result = await sendFloodAlert(userEmail, alertData);
+      
+      if (result.success) {
+        setEmailStatus("success");
+        setTimeout(() => {
+          setEmailStatus("");
+          setShowEmailInput(false);
+        }, 3000);
+      } else {
+        setEmailStatus("error");
+        setTimeout(() => setEmailStatus(""), 3000);
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      setEmailStatus("error");
+      setTimeout(() => setEmailStatus(""), 3000);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flood-alert loading">
@@ -90,14 +136,46 @@ function FloodAlert() {
     <div className="flood-alert">
       <div className="flood-header">
         <h3>🌊 Dự Báo Ngập Lụt AI</h3>
-        <button
-          onClick={fetchFloodPredictions}
-          className="refresh-btn"
-          title="Làm mới"
-        >
-          🔄
-        </button>
+        <div className="header-actions">
+          <button
+            onClick={() => setShowEmailInput(!showEmailInput)}
+            className="email-toggle-btn"
+            title="Nhận cảnh báo qua email"
+          >
+            📧
+          </button>
+          <button
+            onClick={fetchFloodPredictions}
+            className="refresh-btn"
+            title="Làm mới"
+          >
+            🔄
+          </button>
+        </div>
       </div>
+
+      {showEmailInput && (
+        <div className="email-input-section">
+          <div className="email-input-wrapper">
+            <input
+              type="email"
+              value={userEmail}
+              onChange={(e) => setUserEmail(e.target.value)}
+              placeholder="Nhập email của bạn..."
+              className="email-input"
+            />
+            {emailStatus === "success" && (
+              <span className="email-status success">✅ Đã gửi!</span>
+            )}
+            {emailStatus === "error" && (
+              <span className="email-status error">❌ Lỗi! Vui lòng kiểm tra email</span>
+            )}
+          </div>
+          <small className="email-note">
+            Nhập email để nhận cảnh báo chi tiết về các khu vực ngập lụt
+          </small>
+        </div>
+      )}
 
       {lastUpdate && (
         <div className="last-update">
@@ -171,6 +249,16 @@ function FloodAlert() {
                   <strong>💡 Khuyến nghị:</strong>
                   <p>{item.prediction.recommendation}</p>
                 </div>
+
+                {showEmailInput && userEmail && (
+                  <button
+                    className="send-email-btn"
+                    onClick={() => handleSendEmailAlert(item)}
+                    disabled={sendingEmail}
+                  >
+                    {sendingEmail ? "⏳ Đang gửi..." : "📧 Gửi cảnh báo qua email"}
+                  </button>
+                )}
               </div>
             </div>
           ))}

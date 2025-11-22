@@ -3,9 +3,9 @@
  * Component hiển thị danh sách các routes alternatives
  */
 
-import React, { memo } from 'react';
-import { ROUTE_COLORS, FLOOD_COLORS } from '../../../utils/routeConstants';
-import './RouteAlternatives.css';
+import React, { memo } from "react";
+import { ROUTE_COLORS, FLOOD_COLORS } from "../../../utils/routeConstants";
+import "./RouteAlternatives.css";
 
 // Pure function - không cần useCallback
 const getRouteColor = (index, hasFlood, isSelected) => {
@@ -17,14 +17,26 @@ const getRouteColor = (index, hasFlood, isSelected) => {
 };
 
 const RouteAlternatives = memo(({ routes, selectedIndex, onSelectRoute }) => {
-  if (!routes || routes.length <= 1) return null;
+  console.log("🗺️ RouteAlternatives render:", {
+    routesCount: routes?.length,
+    selectedIndex,
+  });
+
+  if (!routes || routes.length === 0) return null;
 
   return (
     <div className="route-alternatives">
       <div className="alternatives-header">
-        <h4>🗺️ Chọn tuyến đường ({routes.length} lựa chọn)</h4>
+        <h4>
+          🗺️{" "}
+          {routes.length > 1
+            ? `Chọn tuyến đường (${routes.length} lựa chọn)`
+            : "Tuyến đường"}
+        </h4>
         <span className="alternatives-hint">
-          Click vào route trên bản đồ hoặc chọn bên dưới:
+          {routes.length > 1
+            ? "Click vào route trên bản đồ hoặc chọn bên dưới:"
+            : "Đây là tuyến đường duy nhất có thể đi"}
         </span>
       </div>
 
@@ -37,12 +49,14 @@ const RouteAlternatives = memo(({ routes, selectedIndex, onSelectRoute }) => {
           return (
             <div
               key={index}
-              className={`alternative-item ${isSelected ? 'selected' : ''} ${
-                hasFlood ? 'has-flood' : 'safe'
+              className={`alternative-item ${isSelected ? "selected" : ""} ${
+                hasFlood ? "has-flood" : "safe"
               }`}
               onClick={() => onSelectRoute(index)}
             >
-              <div className="alternative-number">{isSelected ? '✓' : index + 1}</div>
+              <div className="alternative-number">
+                {isSelected ? "✓" : index + 1}
+              </div>
 
               <div className="alternative-info">
                 <div className="alternative-main">
@@ -56,7 +70,9 @@ const RouteAlternatives = memo(({ routes, selectedIndex, onSelectRoute }) => {
 
                 <div className="alternative-status">
                   {hasFlood ? (
-                    <span className="flood-badge">⚠️ {route.floodCount} vùng ngập</span>
+                    <span className="flood-badge">
+                      ⚠️ {route.floodCount} vùng ngập
+                    </span>
                   ) : (
                     <span className="safe-badge">✅ An toàn</span>
                   )}
@@ -77,8 +93,6 @@ const RouteAlternatives = memo(({ routes, selectedIndex, onSelectRoute }) => {
   );
 });
 
-RouteAlternatives.displayName = 'RouteAlternatives';
+RouteAlternatives.displayName = "RouteAlternatives";
 
 export default RouteAlternatives;
-
-
