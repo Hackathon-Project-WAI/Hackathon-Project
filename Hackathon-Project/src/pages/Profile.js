@@ -148,7 +148,46 @@ const ProfilePage = () => {
     setLoadingLocations(true);
     const result = await userProfileService.getLocations(user.uid);
     if (result.success) {
-      setLocations(result.data);
+      // Kiểm tra và cập nhật status cho mỗi location
+      const updatedLocations = result.data.map((loc) => {
+        // Kiểm tra vùng ngập cho location này
+        const floodZones = getFloodZonesAtPoint(
+          loc.coords.lat,
+          loc.coords.lon,
+          floodData.floodPrones || []
+        );
+
+        console.log(`🔍 Check location "${loc.name}":`, {
+          coords: loc.coords,
+          floodZones: floodZones.length,
+          currentStatus: loc.last_alert_status,
+        });
+
+        // Tính toán status mới
+        let newStatus = null;
+        if (floodZones.length > 0) {
+          const hasHighRisk = floodZones.some((z) => z.riskLevel === "high");
+          const hasMediumRisk = floodZones.some((z) => z.riskLevel === "medium");
+
+          if (hasHighRisk) {
+            newStatus = "critical";
+          } else if (hasMediumRisk) {
+            newStatus = "danger";
+          } else {
+            newStatus = "warning";
+          }
+        }
+        // Nếu không có flood zone thì để null (sẽ hiển thị là safe)
+
+        console.log(`✅ Updated status cho "${loc.name}": ${newStatus || "safe"}`);
+
+        return {
+          ...loc,
+          last_alert_status: newStatus,
+        };
+      });
+
+      setLocations(updatedLocations);
     }
     setLoadingLocations(false);
   };
@@ -576,6 +615,11 @@ const ProfilePage = () => {
                                 locationCategories.find(
                                   (c) => c.id === loc.type
                                 ) || locationCategories[0];
+                              
+                              // Xác định status hiển thị (ưu tiên last_alert_status)
+                              const displayStatus = loc.last_alert_status || "safe";
+                              const isSafe = !displayStatus || displayStatus === "safe";
+                              
                               return (
                                 <div
                                   key={loc.id}
@@ -584,7 +628,7 @@ const ProfilePage = () => {
                                   <div className="flex items-center gap-4">
                                     <div
                                       className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-sm border border-white/50 ${
-                                        loc.status === "safe"
+                                        isSafe
                                           ? "bg-green-50 text-green-600"
                                           : "bg-orange-50 text-orange-600"
                                       }`}
@@ -599,7 +643,7 @@ const ProfilePage = () => {
                                         {loc.address}
                                       </p>
                                       <div className="mt-2">
-                                        {loc.status === "safe" ? (
+                                        {isSafe ? (
                                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-100 border border-green-200 text-green-700 text-[10px] font-bold uppercase">
                                             <ShieldCheck size={10} /> An toàn
                                           </span>
