@@ -287,33 +287,133 @@ const ProfilePage = () => {
       lng: position.lng,
     });
 
-    // Check nếu địa điểm nằm trong vùng ngập
+    // ✅ Check cả mock data VÀ sensor data
     const floodZones = getFloodZonesAtPoint(
       position.lat,
       position.lng,
       floodData.floodPrones || []
     );
 
-    console.log("🔍 Kết quả check vùng ngập:", {
+    console.log("🔍 Kết quả check vùng ngập (mock data):", {
       totalFloodZones: floodData.floodPrones?.length || 0,
       foundFloodZones: floodZones.length,
       floodZones: floodZones,
     });
 
-    if (floodZones.length > 0) {
-      console.log("⚠️ CẢNH BÁO: Địa điểm nằm trong vùng ngập!", floodZones);
+    // ✅ Check với sensor data từ Firebase - Gọi API check với tọa độ trực tiếp
+    let sensorAlerts = [];
+    try {
+      console.log("🔍 Đang check với sensor data tại tọa độ:", position);
+      const { apiClient } = await import("../api/config");
+
+      // Gọi API check với tọa độ trực tiếp (không cần userId vì chỉ check tọa độ)
+      const response = await apiClient.post("/api/check-sensor-based-alert", {
+        userId: user?.uid || "temp", // Dùng temp nếu chưa login
+        sendEmail: false, // Không gửi email khi đang chọn
+        checkLocation: {
+          // ✅ Thêm location tạm để check
+          coords: {
+            lat: position.lat,
+            lon: position.lng,
+          },
+          alertRadius: 1000,
+        },
+      });
+
+      // Lấy alerts từ response
+      if (
+        response.data &&
+        response.data.alerts &&
+        response.data.alerts.length > 0
+      ) {
+        // Lấy sensors từ alerts (mỗi alert có sensor)
+        sensorAlerts = response.data.alerts.map(
+          (alert) => alert.sensor || alert
+        );
+
+        console.log("🔍 Kết quả check sensor data:", {
+          totalAlerts: response.data.affectedLocations || 0,
+          sensorAlerts: sensorAlerts.length,
+          sensors: sensorAlerts.map((s) => ({
+            name: s.sensorName,
+            distance: s.distance,
+            waterLevel: s.waterLevel,
+            floodStatus: s.floodStatus,
+          })),
+        });
+      } else {
+        console.log("✅ Không có sensor nào cảnh báo tại tọa độ này");
+      }
+    } catch (sensorError) {
+      console.error("❌ Lỗi check sensor data:", sensorError);
+      // Không block user nếu check thất bại
+    }
+
+    // ✅ Kết hợp cảnh báo từ mock data và sensor data
+    const hasFloodZones = floodZones.length > 0;
+    const hasSensorAlerts = sensorAlerts.length > 0;
+
+    if (hasFloodZones || hasSensorAlerts) {
+      console.log("⚠️ CẢNH BÁO: Địa điểm có nguy cơ ngập!", {
+        floodZones: floodZones.length,
+        sensorAlerts: sensorAlerts.length,
+      });
+
+      let warningMessage = "";
+      const warningZones = [];
+
+      if (hasFloodZones) {
+        warningMessage += `Địa điểm này nằm trong ${floodZones.length} vùng ngập lụt (mock data). `;
+        floodZones.forEach((zone) => {
+          warningZones.push({
+            name: zone.name,
+            type: "mock",
+            riskLevel: zone.riskLevel || "high",
+          });
+        });
+      }
+
+      if (hasSensorAlerts) {
+        warningMessage += `Có ${sensorAlerts.length} sensor gần đó đang cảnh báo ngập. `;
+        sensorAlerts.forEach((alert) => {
+          const sensor = alert.sensor || alert;
+          warningZones.push({
+            name: sensor.sensorName || "Sensor",
+            type: "sensor",
+            distance: sensor.distance || 0,
+            waterLevel: sensor.waterLevel || 0,
+            floodStatus: sensor.floodStatus || "WARNING",
+          });
+        });
+      }
+
       setFloodWarning({
-        zones: floodZones,
-        message: `Địa điểm này nằm trong ${floodZones.length} vùng ngập lụt!`,
+        zones: warningZones,
+        message: warningMessage.trim(),
+        hasMockData: hasFloodZones,
+        hasSensorData: hasSensorAlerts,
       });
 
       // Hiển thị alert để user nhận biết
-      const zoneNames = floodZones.map((z) => z.name).join(", ");
-      alert(
-        `⚠️ CẢNH BÁO VÙNG NGẬP!\n\nĐịa điểm này nằm trong ${floodZones.length} vùng ngập lụt:\n${zoneNames}\n\nHãy cân nhắc kỹ trước khi lưu.`
-      );
+      let alertMessage = "⚠️ CẢNH BÁO NGẬP LỤT!\n\n";
+      if (hasFloodZones) {
+        const zoneNames = floodZones.map((z) => z.name).join(", ");
+        alertMessage += `Địa điểm này nằm trong ${floodZones.length} vùng ngập lụt:\n${zoneNames}\n\n`;
+      }
+      if (hasSensorAlerts) {
+        alertMessage += `Có ${sensorAlerts.length} sensor gần đó đang cảnh báo:\n`;
+        sensorAlerts.forEach((alert) => {
+          const sensor = alert.sensor || alert;
+          alertMessage += `- ${sensor.sensorName || "Sensor"}: ${
+            sensor.waterLevel || 0
+          }cm, ${sensor.floodStatus || "WARNING"}\n`;
+        });
+        alertMessage += "\n";
+      }
+      alertMessage += "Hãy cân nhắc kỹ trước khi lưu.";
+      alert(alertMessage);
     } else {
-      console.log("✅ Địa điểm an toàn, không nằm trong vùng ngập");
+      console.log("✅ Địa điểm an toàn, không có cảnh báo");
       setFloodWarning(null);
     }
 
@@ -1085,21 +1185,44 @@ const ProfilePage = () => {
                               <span className="font-bold text-orange-700">
                                 {zone.name || `Vùng ${idx + 1}`}
                               </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-white font-bold ${
-                                  zone.riskLevel === "high"
-                                    ? "bg-red-500"
+                              {zone.type === "sensor" ? (
+                                <div className="flex items-center gap-2 ml-auto">
+                                  <span className="text-orange-600">
+                                    {zone.distance}m
+                                  </span>
+                                  <span className="text-orange-600">
+                                    {zone.waterLevel}cm
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-white font-bold ${
+                                      zone.floodStatus === "DANGER" ||
+                                      zone.floodStatus === "CRITICAL"
+                                        ? "bg-red-500"
+                                        : zone.floodStatus === "WARNING"
+                                        ? "bg-orange-500"
+                                        : "bg-yellow-500"
+                                    }`}
+                                  >
+                                    {zone.floodStatus || "WARNING"}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-white font-bold ${
+                                    zone.riskLevel === "high"
+                                      ? "bg-red-500"
+                                      : zone.riskLevel === "medium"
+                                      ? "bg-orange-500"
+                                      : "bg-yellow-500"
+                                  }`}
+                                >
+                                  {zone.riskLevel === "high"
+                                    ? "Nguy hiểm cao"
                                     : zone.riskLevel === "medium"
-                                    ? "bg-orange-500"
-                                    : "bg-yellow-500"
-                                }`}
-                              >
-                                {zone.riskLevel === "high"
-                                  ? "Nguy hiểm cao"
-                                  : zone.riskLevel === "medium"
-                                  ? "Nguy hiểm trung bình"
-                                  : "Cảnh báo"}
-                              </span>
+                                    ? "Nguy hiểm trung bình"
+                                    : "Cảnh báo"}
+                                </span>
+                              )}
                             </div>
                           ))}
                         </div>

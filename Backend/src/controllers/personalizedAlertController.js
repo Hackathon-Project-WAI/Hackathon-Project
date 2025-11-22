@@ -340,7 +340,60 @@ class PersonalizedAlertController {
    */
   async checkSensorBasedAlert(req, res) {
     try {
-      const { userId, sendEmail: shouldSendEmail = true } = req.body;
+      const {
+        userId,
+        sendEmail: shouldSendEmail = true,
+        checkLocation,
+      } = req.body;
+
+      // ✅ Nếu có checkLocation (location tạm để check), check trực tiếp
+      if (checkLocation && checkLocation.coords) {
+        console.log(
+          `🔍 [SENSOR-BASED] Check location tạm: ${checkLocation.coords.lat}, ${checkLocation.coords.lon}`
+        );
+
+        // Lấy tất cả sensors
+        const sensors = await sensorBasedAlertService.getAllSensors();
+
+        // Check location tạm với sensors
+        const nearbyFloods =
+          await sensorBasedAlertService.checkLocationWithSensors(
+            {
+              name: "Địa điểm đang chọn",
+              coords: {
+                lat: checkLocation.coords.lat,
+                lon: checkLocation.coords.lon,
+              },
+              alertRadius: checkLocation.alertRadius || 1000,
+            },
+            sensors,
+            {} // User settings mặc định
+          );
+
+        if (nearbyFloods.length > 0) {
+          return res.json({
+            success: true,
+            message: `Phát hiện ${nearbyFloods.length} sensor gần đó đang cảnh báo`,
+            affectedLocations: nearbyFloods.length,
+            totalLocations: 1,
+            alerts: nearbyFloods.map((flood) => ({
+              location: {
+                coords: checkLocation.coords,
+              },
+              sensor: flood,
+              timestamp: new Date().toISOString(),
+            })),
+          });
+        } else {
+          return res.json({
+            success: true,
+            message: "Địa điểm này an toàn",
+            affectedLocations: 0,
+            totalLocations: 1,
+            alerts: [],
+          });
+        }
+      }
 
       if (!userId) {
         return res.status(400).json({
