@@ -1,0 +1,145 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Huyện Hòa Vang",
+        "shortName": "Hòa Vang",
+        "admin_level": "5"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.0, 16.2],
+            [108.0, 15.9],
+            [108.3, 15.9],
+            [108.3, 16.2],
+            [108.0, 16.2]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Quận Liên Chiểu",
+        "shortName": "Liên Chiểu",
+        "admin_level": "5"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.1, 16.1],
+            [108.1, 16.0],
+            [108.2, 16.0],
+            [108.2, 16.1],
+            [108.1, 16.1]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Quận Cẩm Lệ",
+        "shortName": "Cẩm Lệ",
+        "admin_level": "5"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.18, 16.05],
+            [108.18, 15.98],
+            [108.25, 15.98],
+            [108.25, 16.05],
+            [108.18, 16.05]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Quận Hải Châu",
+        "shortName": "Hải Châu",
+        "admin_level": "5"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.21, 16.08],
+            [108.21, 16.04],
+            [108.23, 16.04],
+            [108.23, 16.08],
+            [108.21, 16.08]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Quận Thanh Khê",
+        "shortName": "Thanh Khê",
+        "admin_level": "5"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.185, 16.075],
+            [108.185, 16.05],
+            [108.21, 16.05],
+            [108.21, 16.075],
+            [108.185, 16.075]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Quận Sơn Trà",
+        "shortName": "Sơn Trà",
+        "admin_level": "5"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.23, 16.12],
+            [108.23, 16.05],
+            [108.28, 16.05],
+            [108.28, 16.12],
+            [108.23, 16.12]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Quận Ngũ Hành Sơn",
+        "shortName": "Ngũ Hành Sơn",
+        "admin_level": "5"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.23, 16.04],
+            [108.23, 15.98],
+            [108.27, 15.98],
+            [108.27, 16.04],
+            [108.23, 16.04]
+          ]
+        ]
+      }
+    }
+  ]
+}

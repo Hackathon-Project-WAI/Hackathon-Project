@@ -1,0 +1,110 @@
+/* RouteInfo Component Styles */
+
+.route-info-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  margin-top: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.route-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px 10px 0 0;
+}
+
+.route-info-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.route-info-header.safe {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.route-info-header.warning {
+  background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+}
+
+.route-number-badge {
+  font-size: 12px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  font-weight: normal;
+}
+
+.clear-route-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.clear-route-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.route-stats {
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.stat-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+.stat-label {
+  color: #666;
+  flex-shrink: 0;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #333;
+  margin-left: auto;
+}
+
+.stat-value.safe {
+  color: #4caf50;
+}
+
+.stat-value.danger {
+  color: #f44336;
+  font-weight: 700;
+}
+
+
+
+
+
+

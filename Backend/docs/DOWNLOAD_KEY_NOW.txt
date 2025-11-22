@@ -1,0 +1,102 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 LẤY SERVICE ACCOUNT KEY CHO PROJECT: hackathon-weather-634bf
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Project ID của bạn: hackathon-weather-634bf
+✅ Đã cập nhật file .env với Project ID
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BƯỚC 1: Mở Firebase Console cho project của bạn
+   
+   👉 Click vào link này (hoặc copy vào trình duyệt):
+   
+   https://console.firebase.google.com/project/hackathon-weather-634bf/settings/serviceaccounts/adminsdk
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BƯỚC 2: Trên trang Service Accounts
+
+   1. Bạn sẽ thấy tab "Service accounts" đã được chọn
+   
+   2. Kéo xuống phần "Firebase Admin SDK"
+   
+   3. Chọn "Node.js" (mặc định)
+   
+   4. Click nút "Generate new private key" (màu xanh)
+   
+   5. Popup xác nhận xuất hiện → Click "Generate key"
+   
+   6. File JSON sẽ tự động download (tên dạng: hackathon-weather-634bf-xxxxx.json)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BƯỚC 3: Cài đặt file JSON
+
+   1. Tìm file vừa download (thường ở thư mục Downloads)
+   
+   2. ĐỔI TÊN file thành: serviceAccountKey.json
+   
+   3. DI CHUYỂN file đến đúng vị trí:
+      C:\Users\Admin\Desktop\test\Test_hackathon\Backend\serviceAccountKey.json
+   
+   ⚠️  Quan trọng: File phải ở ĐÚNG thư mục Backend!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BƯỚC 4: Enable Firestore Database (Nếu chưa có)
+
+   1. Vào: https://console.firebase.google.com/project/hackathon-weather-634bf/firestore
+   
+   2. Nếu chưa có Firestore, click "Create database"
+   
+   3. Chọn location: asia-southeast1 (Singapore)
+   
+   4. Start mode: "Test mode" (để dễ test, có thể đổi sau)
+   
+   5. Click "Enable"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ BƯỚC 5: Kiểm tra và chạy
+
+   Sau khi đã copy file serviceAccountKey.json vào đúng vị trí:
+
+   1. Kiểm tra cấu hình:
+      npm run setup
+
+   2. Nếu ✅ tất cả OK, chạy bot:
+      
+      Terminal 1:
+      npm run bot:listener
+      
+      Terminal 2:
+      npm run bot:alert
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 KIỂM TRA FILE ĐÃ ĐÚNG VỊ TRÍ CHƯA:
+
+   Chạy lệnh này để kiểm tra:
+   
+   ls -la Backend/serviceAccountKey.json
+   
+   Nếu thấy file → OK ✅
+   Nếu "No such file" → File chưa đúng vị trí ❌
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 MẸO:
+
+   File serviceAccountKey.json phải có dạng:
+   
+   {
+     "type": "service_account",
+     "project_id": "hackathon-weather-634bf",
+     "private_key_id": "...",
+     "private_key": "-----BEGIN PRIVATE KEY-----\n...",
+     "client_email": "...",
+     ...
+   }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

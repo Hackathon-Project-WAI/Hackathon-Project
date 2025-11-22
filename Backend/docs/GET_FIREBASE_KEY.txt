@@ -1,0 +1,53 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 HƯỚNG DẪN LẤY FIREBASE SERVICE ACCOUNT KEY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 BƯỚC 1: Truy cập Firebase Console
+   👉 https://console.firebase.google.com/
+
+📋 BƯỚC 2: Chọn Project của bạn
+   - Nếu chưa có, click "Add project" để tạo mới
+   - Nhập tên project (ví dụ: flood-alert-danang)
+   - Enable Google Analytics (tùy chọn)
+
+📋 BƯỚC 3: Enable Firestore Database
+   - Sidebar → Build → Firestore Database
+   - Click "Create database"
+   - Chọn location: asia-southeast1 (Singapore)
+   - Start in "Test mode" (có thể đổi sau)
+
+📋 BƯỚC 4: Lấy Service Account Key
+   1. Click vào ⚙️ (Settings) góc trên bên trái
+   2. Chọn "Project settings"
+   3. Chuyển sang tab "Service accounts"
+   4. Click nút "Generate new private key"
+   5. Confirm → File JSON sẽ được tải về
+
+📋 BƯỚC 5: Cài đặt File
+   1. Đổi tên file vừa tải thành: serviceAccountKey.json
+   2. Copy file vào thư mục này:
+      C:\Users\Admin\Desktop\test\Test_hackathon\Backend\
+
+📋 BƯỚC 6: Cập nhật .env (Nếu cần)
+   Mở file .env và đảm bảo có dòng:
+   FIREBASE_SERVICE_ACCOUNT_PATH=./serviceAccountKey.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SAU KHI HOÀN TẤT:
+
+1. Kiểm tra cấu hình:
+   npm run setup
+
+2. Chạy bot (2 terminals):
+   Terminal 1: npm run bot:listener
+   Terminal 2: npm run bot:alert
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  LƯU Ý BẢO MẬT:
+   - KHÔNG commit serviceAccountKey.json lên Git
+   - KHÔNG share file này với người khác
+   - File đã được thêm vào .gitignore tự động
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

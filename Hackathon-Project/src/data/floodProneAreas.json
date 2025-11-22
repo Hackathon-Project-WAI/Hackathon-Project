@@ -1,0 +1,264 @@
+{
+  "floodPrones": [
+    {
+      "id": "HP001",
+      "name": "Đường Nguyễn Tri Phương",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0678,
+        "lng": 108.2208
+      },
+      "riskLevel": "high",
+      "rainThreshold": {
+        "yellow": 30,
+        "orange": 50,
+        "red": 80
+      },
+      "description": "Khu vực thường xuyên ngập trong mùa mưa bão",
+      "historicalData": {
+        "floodEvents": 15,
+        "lastFlooded": "2023-10-25",
+        "maxDepth": 0.8
+      },
+      "characteristics": ["đường thấp", "thoát nước kém", "gần sông Hàn"]
+    },
+    {
+      "id": "HP002",
+      "name": "Đường Lê Duẩn",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0741,
+        "lng": 108.2221
+      },
+      "riskLevel": "high",
+      "rainThreshold": {
+        "yellow": 35,
+        "orange": 55,
+        "red": 85
+      },
+      "description": "Đoạn gần chợ Hàn thường ngập do địa hình thấp",
+      "historicalData": {
+        "floodEvents": 12,
+        "lastFlooded": "2023-09-15",
+        "maxDepth": 0.6
+      },
+      "characteristics": ["trung tâm thành phố", "mật độ giao thông cao"]
+    },
+    {
+      "id": "HP003",
+      "name": "Khu vực bãi tắm Mỹ Khê",
+      "district": "Ngũ Hành Sơn",
+      "coords": {
+        "lat": 16.0417,
+        "lng": 108.2492
+      },
+      "riskLevel": "medium",
+      "rainThreshold": {
+        "yellow": 40,
+        "orange": 65,
+        "red": 100
+      },
+      "description": "Vùng ven biển có nguy cơ ngập do nước biển dâng",
+      "historicalData": {
+        "floodEvents": 8,
+        "lastFlooded": "2023-11-02",
+        "maxDepth": 0.4
+      },
+      "characteristics": ["ven biển", "du lịch", "nước biển dâng"]
+    },
+    {
+      "id": "HP004",
+      "name": "Đường Điện Biên Phủ",
+      "district": "Thanh Khê",
+      "coords": {
+        "lat": 16.0647,
+        "lng": 108.1961
+      },
+      "riskLevel": "medium",
+      "rainThreshold": {
+        "yellow": 35,
+        "orange": 60,
+        "red": 90
+      },
+      "description": "Khu vực có hệ thống thoát nước chưa tốt",
+      "historicalData": {
+        "floodEvents": 10,
+        "lastFlooded": "2023-08-20",
+        "maxDepth": 0.5
+      },
+      "characteristics": ["khu dân cư", "hệ thống cống rãnh cũ"]
+    },
+    {
+      "id": "HP005",
+      "name": "Cầu Rồng - Cầu Tình Yêu",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0611,
+        "lng": 108.2273
+      },
+      "riskLevel": "high",
+      "rainThreshold": {
+        "yellow": 25,
+        "orange": 45,
+        "red": 70
+      },
+      "description": "Khu vực bờ sông Hàn thường ngập khi triều cường",
+      "historicalData": {
+        "floodEvents": 18,
+        "lastFlooded": "2023-10-30",
+        "maxDepth": 1.0
+      },
+      "characteristics": ["bờ sông", "triều cường", "điểm du lịch"]
+    },
+    {
+      "id": "HP006",
+      "name": "Đường Hoàng Diệu",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0583,
+        "lng": 108.2139
+      },
+      "riskLevel": "medium",
+      "rainThreshold": {
+        "yellow": 40,
+        "orange": 65,
+        "red": 95
+      },
+      "description": "Khu vực gần bến xe trung tâm",
+      "historicalData": {
+        "floodEvents": 9,
+        "lastFlooded": "2023-09-28",
+        "maxDepth": 0.3
+      },
+      "characteristics": ["giao thông công cộng", "khu thương mại"]
+    },
+    {
+      "id": "HP007",
+      "name": "Khu vực Chợ Cồn",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0831,
+        "lng": 108.2192
+      },
+      "riskLevel": "high",
+      "rainThreshold": {
+        "yellow": 30,
+        "orange": 50,
+        "red": 75
+      },
+      "description": "Khu chợ truyền thống gần sông, ngập thường xuyên",
+      "historicalData": {
+        "floodEvents": 20,
+        "lastFlooded": "2023-11-10",
+        "maxDepth": 0.9
+      },
+      "characteristics": ["chợ truyền thống", "gần sông", "địa hình thấp"]
+    },
+    {
+      "id": "HP008",
+      "name": "Đường Núi Thành",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0789,
+        "lng": 108.2156
+      },
+      "riskLevel": "medium",
+      "rainThreshold": {
+        "yellow": 45,
+        "orange": 70,
+        "red": 100
+      },
+      "description": "Tuyến đường huyết mạch của thành phố",
+      "historicalData": {
+        "floodEvents": 7,
+        "lastFlooded": "2023-07-15",
+        "maxDepth": 0.4
+      },
+      "characteristics": ["tuyến chính", "giao thông cao"]
+    },
+    {
+      "id": "HP009",
+      "name": "Khu vực bến Bạch Đằng",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0697,
+        "lng": 108.2331
+      },
+      "riskLevel": "high",
+      "rainThreshold": {
+        "yellow": 20,
+        "orange": 40,
+        "red": 65
+      },
+      "description": "Bến thuyền du lịch, ngập do triều cường và mưa lớn",
+      "historicalData": {
+        "floodEvents": 22,
+        "lastFlooded": "2023-11-05",
+        "maxDepth": 1.2
+      },
+      "characteristics": ["bến thuyền", "du lịch", "mực nước sông"]
+    },
+    {
+      "id": "HP010",
+      "name": "Đường Trần Phú",
+      "district": "Hải Châu",
+      "coords": {
+        "lat": 16.0556,
+        "lng": 108.2267
+      },
+      "riskLevel": "medium",
+      "rainThreshold": {
+        "yellow": 35,
+        "orange": 60,
+        "red": 85
+      },
+      "description": "Đường ven biển có nguy cơ ngập do nước biển dâng",
+      "historicalData": {
+        "floodEvents": 11,
+        "lastFlooded": "2023-08-30",
+        "maxDepth": 0.6
+      },
+      "characteristics": ["ven biển", "resort", "khách sạn"]
+    }
+  ],
+  "riskLevels": {
+    "low": {
+      "color": "#4CAF50",
+      "name": "Thấp",
+      "description": "Nguy cơ ngập thấp"
+    },
+    "medium": {
+      "color": "#FF9800",
+      "name": "Trung bình",
+      "description": "Nguy cơ ngập trung bình"
+    },
+    "high": {
+      "color": "#F44336",
+      "name": "Cao",
+      "description": "Nguy cơ ngập cao"
+    }
+  },
+  "warningLevels": {
+    "yellow": {
+      "color": "#FFC107",
+      "name": "Cảnh báo vàng",
+      "description": "Có thể xảy ra ngập nhẹ"
+    },
+    "orange": {
+      "color": "#FF5722",
+      "name": "Cảnh báo cam",
+      "description": "Nguy cơ ngập trung bình đến cao"
+    },
+    "red": {
+      "color": "#D32F2F",
+      "name": "Cảnh báo đỏ",
+      "description": "Nguy cơ ngập nghiêm trọng"
+    }
+  },
+  "metadata": {
+    "lastUpdated": "2023-11-15",
+    "source": "Sở Nông nghiệp và Phát triển nông thôn Đà Nẵng",
+    "version": "1.0",
+    "description": "Dữ liệu điểm ngập lụt tại thành phố Đà Nẵng dựa trên quan sát thực tế và số liệu lịch sử"
+  }
+}

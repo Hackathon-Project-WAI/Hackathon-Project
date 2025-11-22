@@ -1,0 +1,252 @@
+### ==========================================
+### TEST API ENDPOINTS - Backend Email Service
+### Sử dụng với VS Code extension: REST Client
+### Hoặc copy vào Postman
+### ==========================================
+
+### 🔥 FAKE DATA - POST LÊN FIREBASE (Giả lập IoT)
+PUT https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_001.json
+Content-Type: application/json
+
+{
+  "location": "Cống Phan Đình Phùng, Đà Nẵng",
+  "current_percent": 85,
+  "previous_percent": 50,
+  "timestamp": "2025-11-19T14:30:00"
+}
+
+###
+
+### 🤖 GỌI BACKEND ĐỌC FIREBASE VÀ GỬI EMAIL
+POST http://localhost:3001/api/check-firebase-and-alert
+Content-Type: application/json
+
+{
+  "sensorId": "sensor_001"
+}
+
+###
+
+### 📊 ĐỌC DATA TỪ FIREBASE (Kiểm tra)
+GET http://localhost:3001/api/firebase/sensors/sensor_001
+
+###
+
+### 📊 ĐỌC TẤT CẢ SENSORS
+GET http://localhost:3001/api/firebase/sensors
+
+###
+
+### ==========================================
+### 🧪 TEST CASES - NHIỀU TRƯỜNG HỢP
+### ==========================================
+
+### 🔥 TEST 1: Ngập lụt NGUY HIỂM (85%)
+PUT https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_high.json
+Content-Type: application/json
+
+{
+  "location": "Cầu Rồng, Đà Nẵng",
+  "current_percent": 85,
+  "previous_percent": 50,
+  "timestamp": "2025-11-19T14:30:00"
+}
+
+###
+
+POST http://localhost:3001/api/check-firebase-and-alert
+Content-Type: application/json
+
+{
+  "sensorId": "sensor_test_high"
+}
+
+###
+
+### ⚠️ TEST 2: Ngập lụt TRUNG BÌNH (65%)
+PUT https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_medium.json
+Content-Type: application/json
+
+{
+  "location": "Đường Lê Duẩn, Đà Nẵng",
+  "current_percent": 65,
+  "previous_percent": 55,
+  "timestamp": "2025-11-19T15:00:00"
+}
+
+###
+
+POST http://localhost:3001/api/check-firebase-and-alert
+Content-Type: application/json
+
+{
+  "sensorId": "sensor_test_medium"
+}
+
+###
+
+### ✅ TEST 3: Mức nước AN TOÀN (40%)
+PUT https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_safe.json
+Content-Type: application/json
+
+{
+  "location": "Cống Hòa Xuân, Đà Nẵng",
+  "current_percent": 40,
+  "previous_percent": 35,
+  "timestamp": "2025-11-19T15:30:00"
+}
+
+###
+
+POST http://localhost:3001/api/check-firebase-and-alert
+Content-Type: application/json
+
+{
+  "sensorId": "sensor_test_safe"
+}
+
+###
+
+### 🚨 TEST 4: Nước tăng NHANH (45% → 90%)
+PUT https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_rapid.json
+Content-Type: application/json
+
+{
+  "location": "Cống Hải Châu, Đà Nẵng",
+  "current_percent": 90,
+  "previous_percent": 45,
+  "timestamp": "2025-11-19T16:00:00"
+}
+
+###
+
+POST http://localhost:3001/api/check-firebase-and-alert
+Content-Type: application/json
+
+{
+  "sensorId": "sensor_test_rapid"
+}
+
+###
+
+### 🔴 TEST 5: MỨC NGẬP CỰC KỲ NGUY HIỂM (95%)
+PUT https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_critical.json
+Content-Type: application/json
+
+{
+  "location": "Ngã Tư Lê Duẩn - Điện Biên Phủ",
+  "current_percent": 95,
+  "previous_percent": 88,
+  "timestamp": "2025-11-19T16:30:00"
+}
+
+###
+
+POST http://localhost:3001/api/check-firebase-and-alert
+Content-Type: application/json
+
+{
+  "sensorId": "sensor_test_critical"
+}
+
+###
+
+### 1. Test Server
+GET http://localhost:3001/
+
+###
+
+### 2. Gửi Email Test Nhanh
+POST http://localhost:3001/api/send-test-email
+Content-Type: application/json
+
+{
+  "to": "your-email@gmail.com"
+}
+
+###
+
+### 3. 🤖 Tạo Cảnh Báo Ngập Lụt Bằng Gemini AI (KHÔNG gửi email)
+POST http://localhost:3001/api/generate-flood-alert
+Content-Type: application/json
+
+{
+  "current_percent": 85,
+  "previous_percent": 50,
+  "location": "Cống Phan Đình Phùng, Đà Nẵng",
+  "timestamp": "2025-11-19T01:42:00"
+}
+
+###
+
+### 4. 🤖 Tạo Cảnh Báo Ngập Lụt Bằng AI VÀ Gửi Email
+POST http://localhost:3001/api/generate-flood-alert
+Content-Type: application/json
+
+{
+  "current_percent": 90,
+  "previous_percent": 60,
+  "location": "Cầu Rồng, Đà Nẵng",
+  "timestamp": "2025-11-19T02:00:00",
+  "to": "your-email@gmail.com"
+}
+
+###
+
+### 5. Test Ngưỡng Cảnh Báo Trung Bình (60-79%)
+POST http://localhost:3001/api/generate-flood-alert
+Content-Type: application/json
+
+{
+  "current_percent": 65,
+  "previous_percent": 55,
+  "location": "Đường Lê Duẩn, Đà Nẵng",
+  "timestamp": "2025-11-19T03:00:00",
+  "to": "your-email@gmail.com"
+}
+
+###
+
+### 6. Test Tốc Độ Nước Tăng Nhanh
+POST http://localhost:3001/api/generate-flood-alert
+Content-Type: application/json
+
+{
+  "current_percent": 82,
+  "previous_percent": 45,
+  "location": "Cống Hòa Xuân, Đà Nẵng",
+  "timestamp": "2025-11-19T04:00:00",
+  "to": "your-email@gmail.com"
+}
+
+###
+
+### 7. Gửi Cảnh Báo Lũ Lụt (Template Có Sẵn - Không dùng AI)
+POST http://localhost:3001/api/send-flood-alert
+Content-Type: application/json
+
+{
+  "to": "your-email@gmail.com",
+  "alertData": {
+    "district": "Hải Châu, Đà Nẵng",
+    "level": "Cao",
+    "rainfall": "150",
+    "time": "2025-11-19 14:30"
+  }
+}
+
+###
+
+### 8. Gửi Email Custom
+POST http://localhost:3001/api/send-email
+Content-Type: application/json
+
+{
+  "to": "your-email@gmail.com",
+  "subject": "Test Custom Email",
+  "html": "<h1>Hello from Backend!</h1><p>This is a custom email.</p>",
+  "text": "Hello from Backend! This is a custom email."
+}
+
+###
+
