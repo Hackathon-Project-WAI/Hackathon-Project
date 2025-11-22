@@ -18,22 +18,35 @@ class FirebaseClient {
     try {
       const databaseURL = process.env.FIREBASE_DATABASE_URL;
       const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+      const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
       if (!databaseURL) {
         throw new Error("FIREBASE_DATABASE_URL chưa được cấu hình trong .env");
       }
 
-      if (!serviceAccountPath) {
+      let serviceAccount;
+
+      // Ưu tiên dùng JSON string từ biến môi trường (cho production)
+      if (serviceAccountJson) {
+        try {
+          serviceAccount = JSON.parse(serviceAccountJson);
+          console.log("🔑 Sử dụng Service Account từ biến môi trường JSON");
+        } catch (parseError) {
+          throw new Error(
+            "FIREBASE_SERVICE_ACCOUNT_JSON không hợp lệ. Kiểm tra format JSON."
+          );
+        }
+      }
+      // Fallback: dùng file JSON (cho local development)
+      else if (serviceAccountPath) {
+        const keyPath = path.resolve(serviceAccountPath);
+        serviceAccount = require(keyPath);
+        console.log(`📁 Sử dụng Service Account từ file: ${path.basename(keyPath)}`);
+      } else {
         throw new Error(
-          "FIREBASE_SERVICE_ACCOUNT_KEY chưa được cấu hình trong .env"
+          "Cần cấu hình FIREBASE_SERVICE_ACCOUNT_JSON hoặc FIREBASE_SERVICE_ACCOUNT_KEY"
         );
       }
-
-      // Resolve path tương đối từ root project
-      const keyPath = path.resolve(serviceAccountPath);
-
-      // Require trực tiếp file JSON (như docs Firebase)
-      const serviceAccount = require(keyPath);
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -42,7 +55,6 @@ class FirebaseClient {
 
       this.initialized = true;
       console.log("✅ Firebase Admin SDK khởi tạo thành công");
-      console.log(`📁 Service Account: ${path.basename(keyPath)}`);
     } catch (error) {
       console.error("❌ Lỗi khởi tạo Firebase:", error.message);
 
@@ -52,7 +64,7 @@ class FirebaseClient {
           "1. Download từ Firebase Console > Project Settings > Service Accounts"
         );
         console.error("2. Lưu vào Backend/configs/serviceAccountKey.json");
-        console.error("3. Kiểm tra đường dẫn trong .env");
+        console.error("3. HOẶC set FIREBASE_SERVICE_ACCOUNT_JSON trong .env");
       }
 
       throw error;
