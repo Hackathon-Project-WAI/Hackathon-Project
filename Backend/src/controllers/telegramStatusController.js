@@ -52,8 +52,9 @@ async function checkTelegramStatus(req, res) {
       }
     }
 
-    // Chỉ considered "linked" nếu có chatId VÀ is_active = true
-    const isLinked = !!chatId && isActive;
+    // ⭐ QUAN TRỌNG: Chỉ cần có chatId là đã linked (không cần check is_active)
+    // Vì user có thể đã link nhưng chưa /start lại sau khi /stop
+    const isLinked = !!chatId;
 
     return res.json({
       success: true,

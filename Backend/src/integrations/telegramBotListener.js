@@ -84,13 +84,14 @@ async function handleStartCommand(message) {
         console.log(`✅ Đã link chat_id ${chatId} với user ${userIdFromDeepLink}`);
       }
       
-      // Lưu người dùng vào telegram_users với email
+      // Lưu người dùng vào telegram_users với email VÀ set is_active = true
       const result = await saveTelegramUser(chatId, {
         username,
         first_name: firstName,
         last_name: lastName,
         email: userEmail,
-        firebase_user_id: userIdFromDeepLink
+        firebase_user_id: userIdFromDeepLink,
+        is_active: true // ⭐ QUAN TRỌNG: Reactivate user
       });
       
       // Tin nhắn chào mừng với tên từ Firebase
