@@ -41,7 +41,9 @@ class FirebaseClient {
       else if (serviceAccountPath) {
         const keyPath = path.resolve(serviceAccountPath);
         serviceAccount = require(keyPath);
-        console.log(`📁 Sử dụng Service Account từ file: ${path.basename(keyPath)}`);
+        console.log(
+          `📁 Sử dụng Service Account từ file: ${path.basename(keyPath)}`
+        );
       } else {
         throw new Error(
           "Cần cấu hình FIREBASE_SERVICE_ACCOUNT_JSON hoặc FIREBASE_SERVICE_ACCOUNT_KEY"

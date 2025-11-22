@@ -218,9 +218,13 @@ export const useRouting = (getRoutingService, floodZones) => {
 
             // Kiểm tra nếu không tìm được route an toàn
             if (!bestRoute) {
-              console.error("❌ Không tìm được route an toàn nào (tất cả đều đi qua vùng ngập)");
+              console.error(
+                "❌ Không tìm được route an toàn nào (tất cả đều đi qua vùng ngập)"
+              );
               setLoading(false);
-              setError("Không tìm được đường an toàn. Tất cả các tuyến đường đều đi qua vùng ngập lụt.");
+              setError(
+                "Không tìm được đường an toàn. Tất cả các tuyến đường đều đi qua vùng ngập lụt."
+              );
               setAllRoutes(analyzedRoutes); // Vẫn hiển thị routes không an toàn
               reject(new Error("No safe routes available"));
               return;

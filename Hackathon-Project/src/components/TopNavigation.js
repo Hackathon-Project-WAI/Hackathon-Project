@@ -281,8 +281,9 @@ const TopNavigation = ({ user, onLogout }) => {
         showModal={showQRModal}
         onClose={() => {
           setShowQRModal(false);
-          // Refresh trạng thái sau khi đóng modal (user có thể đã quét)
-          setTimeout(() => checkTelegramLinkStatus(), 1000);
+          // Refresh trạng thái ngay lập tức khi đóng modal
+          console.log("🔄 Modal đóng, đang refresh trạng thái Telegram...");
+          checkTelegramLinkStatus();
         }}
       />
     </div>

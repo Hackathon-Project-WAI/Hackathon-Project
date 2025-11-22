@@ -4,25 +4,27 @@
  */
 
 // Base URL cho Backend API
-export const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4000';
+export const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  "https://hackathon-project-pi6k.onrender.com";
 
 // API Endpoints
 export const API_ENDPOINTS = {
   // Email APIs
-  SEND_TEST_EMAIL: '/api/send-test-email',
-  SEND_EMAIL: '/api/send-email',
-  SEND_FLOOD_ALERT: '/api/send-flood-alert',
-  SEND_WEATHER_UPDATE: '/api/send-weather-update',
-  
+  SEND_TEST_EMAIL: "/api/send-test-email",
+  SEND_EMAIL: "/api/send-email",
+  SEND_FLOOD_ALERT: "/api/send-flood-alert",
+  SEND_WEATHER_UPDATE: "/api/send-weather-update",
+
   // AI Alert APIs
-  GENERATE_FLOOD_ALERT: '/api/generate-flood-alert',
-  
+  GENERATE_FLOOD_ALERT: "/api/generate-flood-alert",
+
   // Firebase APIs
-  FIREBASE_SENSORS: '/api/firebase/sensors',
+  FIREBASE_SENSORS: "/api/firebase/sensors",
   FIREBASE_SENSOR_BY_ID: (sensorId) => `/api/firebase/sensors/${sensorId}`,
-  
+
   // Personalized Alert APIs
-  CHECK_USER_LOCATIONS_ALERT: '/api/check-user-locations-alert',
+  CHECK_USER_LOCATIONS_ALERT: "/api/check-user-locations-alert",
   GET_USER_LOCATIONS: (userId) => `/api/user-locations/${userId}`,
 };
 
@@ -41,4 +43,3 @@ export default {
   API_TIMEOUT,
   API_RETRY_CONFIG,
 };
-

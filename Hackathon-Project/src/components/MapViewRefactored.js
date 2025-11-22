@@ -89,7 +89,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   }, [userLocation]);
 
   // ========== MERGE FLOOD ZONES: Mock + Sensor ==========
-  
+
   // Subscribe to sensor data và convert thành flood zones
   useEffect(() => {
     console.log("🚀 useEffect for sensors - mapReady:", mapReady);
@@ -191,7 +191,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   }, [mapReady]);
 
   // ========== RENDER FLOOD ZONES ON MAP ==========
-  
+
   useEffect(() => {
     if (
       !mapReady ||
