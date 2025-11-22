@@ -41,8 +41,12 @@ class SensorService {
       const checkAndResolve = () => {
         loadedCount++;
         if (loadedCount === totalSources && !hasError) {
-          const sensorsArray = Object.entries(allSensors).map(([id, sensor]) => sensor);
-          console.log(`📡 Loaded ${sensorsArray.length} sensors from all sources`);
+          const sensorsArray = Object.entries(allSensors).map(
+            ([id, sensor]) => sensor
+          );
+          console.log(
+            `📡 Loaded ${sensorsArray.length} sensors from all sources`
+          );
           console.log(
             "🌊 Flooded sensors:",
             sensorsArray.filter((s) => s.isFlooded).length
@@ -61,7 +65,9 @@ class SensorService {
             Object.entries(data).forEach(([id, sensor]) => {
               allSensors[id] = processSensor(id, sensor, "sensors");
             });
-            console.log(`📡 Loaded ${Object.keys(data).length} sensors from /sensors`);
+            console.log(
+              `📡 Loaded ${Object.keys(data).length} sensors from /sensors`
+            );
           }
           checkAndResolve();
         },
@@ -81,9 +87,15 @@ class SensorService {
           const data = snapshot.val();
           if (data) {
             Object.entries(data).forEach(([id, sensor]) => {
-              allSensors[`iot_${id}`] = processSensor(`iot_${id}`, sensor, "iotData");
+              allSensors[`iot_${id}`] = processSensor(
+                `iot_${id}`,
+                sensor,
+                "iotData"
+              );
             });
-            console.log(`📡 Loaded ${Object.keys(data).length} sensors from /iotData`);
+            console.log(
+              `📡 Loaded ${Object.keys(data).length} sensors from /iotData`
+            );
           }
           checkAndResolve();
         },
@@ -104,19 +116,32 @@ class SensorService {
           if (data) {
             Object.entries(data).forEach(([zoneId, zoneData]) => {
               // Chỉ thêm nếu đang cảnh báo
-              if (["warning", "danger", "critical"].includes(zoneData.alert_status?.toLowerCase())) {
+              if (
+                ["warning", "danger", "critical"].includes(
+                  zoneData.alert_status?.toLowerCase()
+                )
+              ) {
                 const sensor = {
                   device_id: zoneData.zone_name || zoneId,
                   latitude: zoneData.latitude || zoneData.lat,
                   longitude: zoneData.longitude || zoneData.lon,
                   water_level_cm: zoneData.current_level || 0,
-                  flood_status: zoneData.alert_status?.toUpperCase() || "WARNING",
+                  flood_status:
+                    zoneData.alert_status?.toUpperCase() || "WARNING",
                   timestamp: zoneData.last_updated || Date.now(),
                 };
-                allSensors[`zone_${zoneId}`] = processSensor(`zone_${zoneId}`, sensor, "flood_zones");
+                allSensors[`zone_${zoneId}`] = processSensor(
+                  `zone_${zoneId}`,
+                  sensor,
+                  "flood_zones"
+                );
               }
             });
-            console.log(`📡 Loaded ${Object.keys(data).length} flood zones from /flood_zones`);
+            console.log(
+              `📡 Loaded ${
+                Object.keys(data).length
+              } flood zones from /flood_zones`
+            );
           }
           checkAndResolve();
         },
@@ -164,12 +189,14 @@ class SensorService {
       sensorsLoaded++;
       if (sensorsLoaded === totalSources) {
         // Convert object to array
-        const sensorsArray = Object.entries(allSensors).map(([id, sensor]) => sensor);
-        
+        const sensorsArray = Object.entries(allSensors).map(
+          ([id, sensor]) => sensor
+        );
+
         console.log(
-          `🌊 Total sensors from all sources: ${sensorsArray.length}, Flooded: ${
-            sensorsArray.filter((s) => s.isFlooded).length
-          }`
+          `🌊 Total sensors from all sources: ${
+            sensorsArray.length
+          }, Flooded: ${sensorsArray.filter((s) => s.isFlooded).length}`
         );
         callback(sensorsArray);
       }
@@ -183,7 +210,9 @@ class SensorService {
         Object.entries(data).forEach(([id, sensor]) => {
           allSensors[id] = processSensor(id, sensor, "sensors");
         });
-        console.log(`📡 Loaded ${Object.keys(data).length} sensors from /sensors`);
+        console.log(
+          `📡 Loaded ${Object.keys(data).length} sensors from /sensors`
+        );
       }
       mergeAndCallback();
     });
@@ -195,9 +224,15 @@ class SensorService {
       if (data) {
         Object.entries(data).forEach(([id, sensor]) => {
           // Prefix với "iot_" để tránh conflict
-          allSensors[`iot_${id}`] = processSensor(`iot_${id}`, sensor, "iotData");
+          allSensors[`iot_${id}`] = processSensor(
+            `iot_${id}`,
+            sensor,
+            "iotData"
+          );
         });
-        console.log(`📡 Loaded ${Object.keys(data).length} sensors from /iotData`);
+        console.log(
+          `📡 Loaded ${Object.keys(data).length} sensors from /iotData`
+        );
       }
       mergeAndCallback();
     });
@@ -209,7 +244,11 @@ class SensorService {
       if (data) {
         Object.entries(data).forEach(([zoneId, zoneData]) => {
           // Chỉ thêm nếu đang cảnh báo
-          if (["warning", "danger", "critical"].includes(zoneData.alert_status?.toLowerCase())) {
+          if (
+            ["warning", "danger", "critical"].includes(
+              zoneData.alert_status?.toLowerCase()
+            )
+          ) {
             // Convert flood zone thành sensor format
             const sensor = {
               device_id: zoneData.zone_name || zoneId,
@@ -219,10 +258,16 @@ class SensorService {
               flood_status: zoneData.alert_status?.toUpperCase() || "WARNING",
               timestamp: zoneData.last_updated || Date.now(),
             };
-            allSensors[`zone_${zoneId}`] = processSensor(`zone_${zoneId}`, sensor, "flood_zones");
+            allSensors[`zone_${zoneId}`] = processSensor(
+              `zone_${zoneId}`,
+              sensor,
+              "flood_zones"
+            );
           }
         });
-        console.log(`📡 Loaded ${Object.keys(data).length} flood zones from /flood_zones`);
+        console.log(
+          `📡 Loaded ${Object.keys(data).length} flood zones from /flood_zones`
+        );
       }
       mergeAndCallback();
     });

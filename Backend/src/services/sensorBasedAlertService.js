@@ -25,7 +25,9 @@ class SensorBasedAlertService {
         if (sensorsSnapshot.exists()) {
           const sensorsData = sensorsSnapshot.val();
           Object.assign(allSensors, sensorsData);
-          console.log(`📡 Đọc ${Object.keys(sensorsData).length} sensors từ /sensors`);
+          console.log(
+            `📡 Đọc ${Object.keys(sensorsData).length} sensors từ /sensors`
+          );
         }
       } catch (error) {
         console.error("⚠️ Lỗi đọc /sensors:", error.message);
@@ -44,7 +46,9 @@ class SensorBasedAlertService {
               source: "iotData",
             };
           }
-          console.log(`📡 Đọc ${Object.keys(iotData).length} sensors từ /iotData`);
+          console.log(
+            `📡 Đọc ${Object.keys(iotData).length} sensors từ /iotData`
+          );
         }
       } catch (error) {
         console.error("⚠️ Lỗi đọc /iotData:", error.message);
@@ -59,13 +63,19 @@ class SensorBasedAlertService {
           // Convert flood zones thành sensor format
           for (const [zoneId, zoneData] of Object.entries(floodZones)) {
             // Chỉ thêm nếu đang cảnh báo
-            if (["warning", "danger", "critical"].includes(zoneData.alert_status?.toLowerCase())) {
+            if (
+              ["warning", "danger", "critical"].includes(
+                zoneData.alert_status?.toLowerCase()
+              )
+            ) {
               allSensors[`zone_${zoneId}`] = {
                 device_id: zoneData.zone_name || zoneId,
                 latitude: zoneData.latitude || zoneData.lat,
                 longitude: zoneData.longitude || zoneData.lon,
                 water_level_cm: zoneData.current_level || 0,
-                current_percent: zoneData.current_level ? Math.round((zoneData.current_level / 100) * 100) : 0,
+                current_percent: zoneData.current_level
+                  ? Math.round((zoneData.current_level / 100) * 100)
+                  : 0,
                 flood_status: zoneData.alert_status?.toUpperCase() || "WARNING",
                 status: zoneData.alert_status?.toUpperCase() || "WARNING",
                 timestamp: zoneData.last_updated || Date.now(),
@@ -74,7 +84,11 @@ class SensorBasedAlertService {
               };
             }
           }
-          console.log(`📡 Đọc ${Object.keys(floodZones).length} flood zones từ /flood_zones`);
+          console.log(
+            `📡 Đọc ${
+              Object.keys(floodZones).length
+            } flood zones từ /flood_zones`
+          );
         }
       } catch (error) {
         console.error("⚠️ Lỗi đọc /flood_zones:", error.message);
@@ -91,7 +105,7 @@ class SensorBasedAlertService {
               // Tính toán mực nước giả định dựa trên riskLevel
               let waterLevelCm = 0;
               let floodStatus = "NORMAL";
-              
+
               // Nếu riskLevel cao, coi như đang cảnh báo
               if (zone.riskLevel === "high") {
                 waterLevelCm = 50; // Giả định 50cm cho high risk
@@ -100,7 +114,7 @@ class SensorBasedAlertService {
                 waterLevelCm = 30; // Giả định 30cm cho medium risk
                 floodStatus = "WARNING";
               }
-              
+
               // Chỉ thêm nếu có nguy cơ (high hoặc medium)
               if (zone.riskLevel === "high" || zone.riskLevel === "medium") {
                 allSensors[`mock_${zone.id}`] = {
@@ -120,14 +134,22 @@ class SensorBasedAlertService {
               }
             }
           }
-          console.log(`📡 Đọc ${mockZones.length} mock zones từ floodProneAreas.json (${mockZones.filter(z => z.riskLevel === "high" || z.riskLevel === "medium").length} có nguy cơ)`);
+          console.log(
+            `📡 Đọc ${mockZones.length} mock zones từ floodProneAreas.json (${
+              mockZones.filter(
+                (z) => z.riskLevel === "high" || z.riskLevel === "medium"
+              ).length
+            } có nguy cơ)`
+          );
         }
       } catch (error) {
         console.error("⚠️ Lỗi đọc floodProneAreas.json:", error.message);
       }
 
       const totalSensors = Object.keys(allSensors).length;
-      console.log(`✅ Tổng cộng: ${totalSensors} sensors từ tất cả nguồn (sensors + iotData + flood_zones)`);
+      console.log(
+        `✅ Tổng cộng: ${totalSensors} sensors từ tất cả nguồn (sensors + iotData + flood_zones)`
+      );
 
       return allSensors;
     } catch (error) {
@@ -161,18 +183,25 @@ class SensorBasedAlertService {
 
       // Lấy mảng floodPrones
       this.mockFloodZones = jsonData.floodPrones || [];
-      
-      console.log(`✅ Đã load ${this.mockFloodZones.length} mock flood zones từ JSON file`);
-      
+
+      console.log(
+        `✅ Đã load ${this.mockFloodZones.length} mock flood zones từ JSON file`
+      );
+
       return this.mockFloodZones;
     } catch (error) {
       // Nếu không tìm thấy file, thử đường dẫn khác
       try {
-        const altPath = path.join(__dirname, "../../Hackathon-Project/src/data/floodProneAreas.json");
+        const altPath = path.join(
+          __dirname,
+          "../../Hackathon-Project/src/data/floodProneAreas.json"
+        );
         const fileContent = await fs.readFile(altPath, "utf8");
         const jsonData = JSON.parse(fileContent);
         this.mockFloodZones = jsonData.floodPrones || [];
-        console.log(`✅ Đã load ${this.mockFloodZones.length} mock flood zones từ JSON file (alt path)`);
+        console.log(
+          `✅ Đã load ${this.mockFloodZones.length} mock flood zones từ JSON file (alt path)`
+        );
         return this.mockFloodZones;
       } catch (altError) {
         console.warn(`⚠️ Không thể đọc floodProneAreas.json: ${error.message}`);
@@ -225,19 +254,40 @@ class SensorBasedAlertService {
     );
 
     for (const [sensorId, sensorData] of Object.entries(sensors)) {
-      if (!sensorData.latitude || !sensorData.longitude) {
+      // ✅ Kiểm tra tọa độ - hỗ trợ nhiều format
+      const sensorLat = sensorData.latitude || sensorData.lat;
+      const sensorLon = sensorData.longitude || sensorData.lon;
+
+      if (
+        !sensorLat ||
+        !sensorLon ||
+        !location.coords ||
+        !location.coords.lat ||
+        !location.coords.lon
+      ) {
+        console.log(`   ⏭️ Sensor ${sensorId} bỏ qua: thiếu tọa độ`);
+        continue;
+      }
+
+      // ✅ Đảm bảo tọa độ là số
+      const locLat = parseFloat(location.coords.lat);
+      const locLon = parseFloat(location.coords.lon);
+      const sensLat = parseFloat(sensorLat);
+      const sensLon = parseFloat(sensorLon);
+
+      if (isNaN(locLat) || isNaN(locLon) || isNaN(sensLat) || isNaN(sensLon)) {
+        console.log(`   ⏭️ Sensor ${sensorId} bỏ qua: tọa độ không hợp lệ`);
         continue;
       }
 
       // Tính khoảng cách
-      const distance = this.calculateDistance(
-        location.coords.lat,
-        location.coords.lon,
-        sensorData.latitude,
-        sensorData.longitude
-      );
+      const distance = this.calculateDistance(locLat, locLon, sensLat, sensLon);
 
       const distanceMeters = Math.round(distance * 1000);
+
+      console.log(
+        `   📏 Khoảng cách từ "${location.name}" đến sensor ${sensorId}: ${distanceMeters}m (tọa độ: ${locLat},${locLon} → ${sensLat},${sensLon})`
+      );
 
       // Tính phần trăm mực nước
       const waterPercent =
@@ -245,10 +295,16 @@ class SensorBasedAlertService {
         Math.round((sensorData.water_level_cm / 100) * 100);
 
       const waterLevelCm = sensorData.water_level_cm || 0;
-      const floodStatus = sensorData.flood_status || sensorData.status || sensorData.alert_status || "NORMAL";
+      const floodStatus =
+        sensorData.flood_status ||
+        sensorData.status ||
+        sensorData.alert_status ||
+        "NORMAL";
 
       console.log(
-        `   🔍 Sensor ${sensorId}: ${distanceMeters}m, mực nước ${waterLevelCm}cm (${waterPercent}%), trạng thái: ${floodStatus}`
+        `   🔍 Sensor ${sensorId} (${
+          sensorData.source || "sensors"
+        }): ${distanceMeters}m, mực nước ${waterLevelCm}cm (${waterPercent}%), trạng thái: ${floodStatus}`
       );
 
       // ✅ Kiểm tra điều kiện: trong bán kính VÀ có dấu hiệu ngập
@@ -259,20 +315,20 @@ class SensorBasedAlertService {
       // 4. Là mock data (flood prone area) - khu vực dễ ngập, luôn cảnh báo nếu trong bán kính
       const isInRadius = distanceMeters <= alertRadius;
       const isMockData = sensorData.source === "floodProneAreas_json";
-      const isFloodAlerting = ["WARNING", "DANGER", "CRITICAL", "ALERT"].includes(
-        floodStatus.toUpperCase()
-      );
+      const isFloodAlerting = [
+        "WARNING",
+        "DANGER",
+        "CRITICAL",
+        "ALERT",
+      ].includes(floodStatus.toUpperCase());
       const exceedsThreshold = waterLevelCm >= waterLevelThresholdCm;
       const hasWater = waterLevelCm > 0; // Có nước dù chưa vượt ngưỡng
 
       // ⭐ QUAN TRỌNG: Gửi cảnh báo nếu có BẤT KỲ dấu hiệu ngập nào
       // Đặc biệt: Mock data (flood prone areas) luôn cảnh báo nếu trong bán kính
-      const shouldAlert = isInRadius && (
-        exceedsThreshold || 
-        isFloodAlerting || 
-        hasWater || 
-        isMockData // Mock data luôn cảnh báo nếu trong bán kính
-      );
+      const shouldAlert =
+        isInRadius &&
+        (exceedsThreshold || isFloodAlerting || hasWater || isMockData); // Mock data luôn cảnh báo nếu trong bán kính
 
       if (shouldAlert) {
         let reason;
@@ -285,11 +341,11 @@ class SensorBasedAlertService {
         } else if (hasWater) {
           reason = `phát hiện nước ${waterLevelCm}cm (phát hiện sớm)`;
         }
-        
+
         console.log(
           `   ⚠️ CẢNH BÁO: Sensor ${sensorId} ${reason}! (${distanceMeters}m, ${waterLevelCm}cm, ${floodStatus})`
         );
-        
+
         nearbyFloods.push({
           sensorId: sensorId,
           sensorName: sensorData.device_id || sensorData.zone_name || sensorId,
@@ -301,7 +357,8 @@ class SensorBasedAlertService {
             lat: sensorData.latitude,
             lon: sensorData.longitude,
           },
-          timestamp: sensorData.timestamp || sensorData.last_updated || Date.now(),
+          timestamp:
+            sensorData.timestamp || sensorData.last_updated || Date.now(),
           alertReason: reason,
           source: sensorData.source || "sensors", // Nguồn dữ liệu
         });
@@ -309,8 +366,8 @@ class SensorBasedAlertService {
         // Log lý do không cảnh báo để debug
         console.log(
           `   ⏭️ Sensor ${sensorId} trong bán kính nhưng không cảnh báo: ` +
-          `mực nước ${waterLevelCm}cm (ngưỡng: ${waterLevelThresholdCm}cm), ` +
-          `trạng thái ${floodStatus}, không có dấu hiệu ngập`
+            `mực nước ${waterLevelCm}cm (ngưỡng: ${waterLevelThresholdCm}cm), ` +
+            `trạng thái ${floodStatus}, không có dấu hiệu ngập`
         );
       }
     }
@@ -417,10 +474,38 @@ class SensorBasedAlertService {
 
       for (const [id, data] of Object.entries(locationsData)) {
         if (data.status !== "deleted" && data.coords) {
+          // ✅ Validate tọa độ
+          const lat = parseFloat(data.coords.lat);
+          const lon = parseFloat(data.coords.lon);
+
+          if (isNaN(lat) || isNaN(lon)) {
+            console.warn(
+              `⚠️ Location ${id} "${data.name}" có tọa độ không hợp lệ:`,
+              data.coords
+            );
+            continue;
+          }
+
           locations.push({
             id: id,
             ...data,
+            coords: {
+              lat: lat,
+              lon: lon,
+            },
           });
+
+          console.log(
+            `📍 Location "${data.name}": ${lat}, ${lon}, alertRadius: ${
+              data.alertRadius || 1000
+            }m`
+          );
+        } else {
+          console.log(
+            `⏭️ Location ${id} bỏ qua: status=${
+              data.status
+            }, hasCoords=${!!data.coords}`
+          );
         }
       }
 

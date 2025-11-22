@@ -2,6 +2,8 @@ const alertSettingsService = require("./alertSettingsService");
 const firebaseClient = require("../integrations/firebaseClient");
 const emailService = require("../email/emailService");
 const geminiClient = require("../integrations/geminiClient");
+const sensorBasedAlertService = require("./sensorBasedAlertService");
+const personalizedAlertController = require("../controllers/personalizedAlertController");
 
 /**
  * Service tự động check dữ liệu sensor và gửi cảnh báo định kỳ
@@ -37,9 +39,7 @@ class SchedulerService {
       this.startUserScheduler(user.userId, user.settings);
     }
 
-    console.log(
-      `✅ Scheduler đã khởi động cho ${enabledUsers.length} users`
-    );
+    console.log(`✅ Scheduler đã khởi động cho ${enabledUsers.length} users`);
   }
 
   /**
@@ -72,7 +72,12 @@ class SchedulerService {
       clearInterval(this.intervals.get(userId));
     }
 
-    const { checkInterval: rawCheckInterval, sensorIds, threshold, email } = settings;
+    const {
+      checkInterval: rawCheckInterval,
+      sensorIds,
+      threshold,
+      email,
+    } = settings;
 
     // ⭐ QUAN TRỌNG: Convert checkInterval từ phút sang milliseconds nếu cần
     // Frontend lưu checkInterval dưới dạng phút (ví dụ: 15), backend cần milliseconds (ví dụ: 900000)
@@ -94,10 +99,11 @@ class SchedulerService {
       `⏰ Khởi động scheduler cho user ${userId} - Check mỗi ${intervalMinutes} phút (${checkInterval}ms)`
     );
 
-    // Tạo interval mới
+    // Tạo interval mới - ✅ DÙNG SENSOR-BASED ALERT (check locations)
     const intervalId = setInterval(async () => {
       try {
-        await this.checkAndAlert(userId, sensorIds, threshold, email);
+        // ✅ Dùng sensor-based alert service để check TẤT CẢ locations của user
+        await this.checkAndAlertLocations(userId, email);
       } catch (error) {
         console.error(`❌ Lỗi khi check cho user ${userId}:`, error);
       }
@@ -106,7 +112,7 @@ class SchedulerService {
     this.intervals.set(userId, intervalId);
 
     // Chạy check ngay lần đầu
-    this.checkAndAlert(userId, sensorIds, threshold, email);
+    this.checkAndAlertLocations(userId, email);
   }
 
   /**
@@ -141,7 +147,101 @@ class SchedulerService {
   }
 
   /**
-   * Check dữ liệu sensor và gửi cảnh báo nếu cần
+   * ✅ MỚI: Check TẤT CẢ locations của user với sensor data và gửi cảnh báo
+   * @param {string} userId - ID của user
+   * @param {string} email - Email nhận cảnh báo
+   */
+  async checkAndAlertLocations(userId, email) {
+    try {
+      console.log(`🔍 [SCHEDULER] Checking locations cho user ${userId}...`);
+
+      // Cập nhật lastChecked
+      await alertSettingsService.updateLastChecked(userId);
+
+      // ✅ Dùng sensor-based alert service để check TẤT CẢ locations
+      const analysis = await sensorBasedAlertService.analyzeUserLocations(
+        userId
+      );
+
+      console.log(
+        `📊 [SCHEDULER] Kết quả: ${analysis.affectedLocations}/${analysis.totalLocations} locations bị ảnh hưởng`
+      );
+
+      if (analysis.affectedLocations === 0) {
+        console.log(
+          `✅ [SCHEDULER] Tất cả địa điểm của user ${userId} đều an toàn`
+        );
+        return;
+      }
+
+      console.log(
+        `⚠️ [SCHEDULER] Phát hiện ${analysis.affectedLocations} cảnh báo từ sensors!`
+      );
+
+      // Gom alerts theo location (tránh spam nhiều emails cho cùng 1 location)
+      const locationAlertsMap = {};
+
+      for (const alert of analysis.alerts) {
+        const locId = alert.location.id;
+        if (!locationAlertsMap[locId]) {
+          locationAlertsMap[locId] = {
+            location: alert.location,
+            sensors: [],
+          };
+        }
+        locationAlertsMap[locId].sensors.push(alert.sensor);
+      }
+
+      console.log(
+        `📧 [SCHEDULER] Sẽ gửi ${
+          Object.keys(locationAlertsMap).length
+        } email (1 email/location)`
+      );
+
+      // Gửi cảnh báo cho từng location
+      for (const [locId, data] of Object.entries(locationAlertsMap)) {
+        try {
+          // Tạo prompt AI cho nhiều sensors
+          const prompt =
+            sensorBasedAlertService.createPersonalizedPromptMultipleSensors(
+              analysis.user,
+              data.location,
+              data.sensors
+            );
+
+          // Generate email với Gemini
+          const geminiResponse = await geminiClient.generateContent(prompt);
+          const emailContent = JSON.parse(geminiResponse.text);
+
+          // Gửi email
+          if (email && analysis.user.email) {
+            await emailService.sendEmail({
+              to: analysis.user.email,
+              subject: emailContent.subject,
+              htmlBody: emailContent.htmlBody,
+            });
+
+            console.log(
+              `✅ [SCHEDULER] Đã gửi email cảnh báo cho location "${data.location.name}"`
+            );
+          }
+        } catch (error) {
+          console.error(
+            `❌ [SCHEDULER] Lỗi gửi cảnh báo cho location ${locId}:`,
+            error
+          );
+        }
+      }
+    } catch (error) {
+      console.error(
+        `❌ [SCHEDULER] Lỗi check and alert cho user ${userId}:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * ⚠️ DEPRECATED: Check dữ liệu sensor và gửi cảnh báo nếu cần (method cũ)
    * @param {string} userId - ID của user
    * @param {Array} sensorIds - Danh sách sensor IDs
    * @param {number} threshold - Ngưỡng cảnh báo (%)
@@ -182,7 +282,13 @@ class SchedulerService {
             `🚨 CẢNH BÁO: Sensor ${sensorId} vượt ngưỡng! (${currentPercent}% >= ${threshold}%)`
           );
 
-          await this.sendAlert(userId, sensorId, sensorData, currentPercent, email);
+          await this.sendAlert(
+            userId,
+            sensorId,
+            sensorData,
+            currentPercent,
+            email
+          );
         }
       }
     } catch (error) {
@@ -199,7 +305,7 @@ class SchedulerService {
     try {
       // Thử lấy từ iotData trước
       let data = await firebaseClient.readData(`iotData/${sensorId}`);
-      
+
       if (data) {
         return {
           source: "iotData",
@@ -209,7 +315,7 @@ class SchedulerService {
 
       // Nếu không có, thử sensors/flood
       data = await firebaseClient.readData(`sensors/flood/${sensorId}`);
-      
+
       if (data) {
         return {
           source: "sensors/flood",
@@ -331,5 +437,3 @@ class SchedulerService {
 }
 
 module.exports = new SchedulerService();
-
-
