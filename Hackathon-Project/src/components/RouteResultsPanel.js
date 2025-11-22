@@ -168,9 +168,10 @@ Trả lời bằng tiếng Việt, tối đa 50 từ, ngắn gọn và dễ hi�
           const isAnalyzingRoute = isAnalyzing[index];
           const isGeminiRecommended =
             geminiRecommendation?.recommendedIndex === index;
-          
+
           // Nếu route được Gemini gợi ý và AI đã analyzed, chỉ hiện thông tin AI
-          const showOnlyAI = isGeminiRecommended && geminiRecommendation?.aiAnalyzed;
+          const showOnlyAI =
+            isGeminiRecommended && geminiRecommendation?.aiAnalyzed;
 
           return (
             <div
@@ -216,8 +217,8 @@ Trả lời bằng tiếng Việt, tối đa 50 từ, ngắn gọn và dễ hi�
                       <div className="route-card-status">
                         {hasFlood ? (
                           <span className="status-badge-warning">
-                            <AlertTriangle size={10} /> Có {route.floodCount} vùng
-                            ngập
+                            <AlertTriangle size={10} /> Có {route.floodCount}{" "}
+                            vùng ngập
                           </span>
                         ) : (
                           <span className="status-badge-safe">
