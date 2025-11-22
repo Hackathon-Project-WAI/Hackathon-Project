@@ -41,9 +41,9 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   console.log("🚀 MapViewRefactored mounted/updated", {
     placesCount: places?.length,
     floodZonesCount: floodZones?.length,
-    hasApiKey: !!apiKey
+    hasApiKey: !!apiKey,
   });
-  
+
   const mapRef = useRef(null);
   const markersGroup = useRef(null);
   const floodOverlayGroup = useRef(null);
@@ -76,6 +76,17 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     requestLocation,
     requestLocationWithHERE,
   } = useGeolocation(apiKey); // ✨ Pass API key to enable HERE Positioning API
+
+  // Log vị trí người dùng khi có
+  useEffect(() => {
+    if (userLocation) {
+      console.log("📍 VỊ TRÍ CỦA BẠN (User Location):", {
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        accuracy: userLocation.accuracy,
+      });
+    }
+  }, [userLocation]);
 
   const {
     routeStart,
@@ -115,7 +126,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   // Subscribe to sensor data và convert thành flood zones
   useEffect(() => {
     console.log("🚀 useEffect for sensors - mapReady:", mapReady);
-    
+
     if (!mapReady) {
       console.log("⏳ Map not ready yet, skipping sensor subscription");
       return;
@@ -126,12 +137,12 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     const unsubscribe = sensorService.subscribeSensors((sensors) => {
       console.log(`🌊 Received ${sensors.length} sensors from Firebase`);
       console.log("📊 Sensor details:", sensors);
-      
+
       // Convert sensors thành flood zones với bán kính 100m (tăng từ 20m để dễ nhìn)
       const zones = sensorService.sensorsToFloodZones(sensors, 100);
       console.log(`🔵 Created ${zones.length} flood zones from sensors`);
       console.log("🗺️ Flood zones details:", zones);
-      
+
       setSensorFloodZones(zones);
     });
 
@@ -144,7 +155,9 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   // Merge flood zones từ file JSON và sensors
   const combinedFloodZones = useMemo(() => {
     const combined = [...floodZones, ...sensorFloodZones];
-    console.log(`🗺️ Combined flood zones: ${floodZones.length} static + ${sensorFloodZones.length} sensors = ${combined.length} total`);
+    console.log(
+      `🗺️ Combined flood zones: ${floodZones.length} static + ${sensorFloodZones.length} sensors = ${combined.length} total`
+    );
     return combined;
   }, [floodZones, sensorFloodZones]);
 
@@ -182,15 +195,18 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
       const radius = zone.radius || 500;
       const riskLevel = zone.riskLevel || "medium";
 
-      console.log(`🔵 Drawing zone ${index + 1}/${combinedFloodZones.length}:`, {
-        id: zone.id,
-        name: zone.name,
-        type: zone.type,
-        coords: { lat, lng },
-        radius: radius,
-        riskLevel: riskLevel,
-        waterLevel: zone.waterLevel
-      });
+      console.log(
+        `🔵 Drawing zone ${index + 1}/${combinedFloodZones.length}:`,
+        {
+          id: zone.id,
+          name: zone.name,
+          type: zone.type,
+          coords: { lat, lng },
+          radius: radius,
+          riskLevel: riskLevel,
+          waterLevel: zone.waterLevel,
+        }
+      );
 
       const circle = createFloodZoneCircle(lat, lng, radius, riskLevel);
       if (!circle) {
@@ -198,7 +214,9 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
         return;
       }
 
-      console.log(`✅ Circle created for ${zone.id} - type: ${zone.type || 'static'}`);
+      console.log(
+        `✅ Circle created for ${zone.id} - type: ${zone.type || "static"}`
+      );
 
       // Lưu data vào circle
       circle.setData({
@@ -226,7 +244,14 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     addObject(floodOverlayGroup.current);
 
     console.log("✅ Flood zones overlay added");
-  }, [mapReady, map, combinedFloodZones, floodZonesVisible, addObject, removeObject]);
+  }, [
+    mapReady,
+    map,
+    combinedFloodZones,
+    floodZonesVisible,
+    addObject,
+    removeObject,
+  ]);
   // showFloodInfoBubble is defined later but stable (useCallback)
 
   // ========== PLACES MARKERS ==========
