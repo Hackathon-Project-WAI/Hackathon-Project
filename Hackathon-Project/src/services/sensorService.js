@@ -12,114 +12,232 @@ class SensorService {
   }
 
   /**
-   * Lấy tất cả sensors
+   * Lấy tất cả sensors từ CẢ 3 nguồn: sensors, iotData, và flood_zones (giống backend)
    * @returns {Promise<Array>} Mảng sensors với tọa độ và trạng thái ngập
    */
   getAllSensors() {
     return new Promise((resolve, reject) => {
-      const sensorsRef = ref(this.db, "sensors");
+      const allSensors = {};
+      let loadedCount = 0;
+      const totalSources = 3;
+      let hasError = false;
 
+      // Helper function để process sensor
+      const processSensor = (id, sensor, source = "sensors") => {
+        const waterLevel = sensor.water_level_cm || 0;
+        const hasWater = waterLevel > 0;
+        const hasFloodStatus =
+          sensor.flood_status && sensor.flood_status !== "NO_FLOOD";
+
+        return {
+          id,
+          ...sensor,
+          isFlooded: hasWater || hasFloodStatus,
+          source: source,
+        };
+      };
+
+      // Helper function để check và resolve
+      const checkAndResolve = () => {
+        loadedCount++;
+        if (loadedCount === totalSources && !hasError) {
+          const sensorsArray = Object.entries(allSensors).map(([id, sensor]) => sensor);
+          console.log(`📡 Loaded ${sensorsArray.length} sensors from all sources`);
+          console.log(
+            "🌊 Flooded sensors:",
+            sensorsArray.filter((s) => s.isFlooded).length
+          );
+          resolve(sensorsArray);
+        }
+      };
+
+      // 1. Đọc từ /sensors
+      const sensorsRef = ref(this.db, "sensors");
       onValue(
         sensorsRef,
         (snapshot) => {
           const data = snapshot.val();
-          if (!data) {
-            resolve([]);
-            return;
+          if (data) {
+            Object.entries(data).forEach(([id, sensor]) => {
+              allSensors[id] = processSensor(id, sensor, "sensors");
+            });
+            console.log(`📡 Loaded ${Object.keys(data).length} sensors from /sensors`);
           }
-
-          // Convert object to array với flood zones
-          const sensors = Object.entries(data).map(([id, sensor]) => ({
-            id,
-            ...sensor,
-            // Chỉ tạo flood zone nếu có flood_status khác "NO_FLOOD"
-            isFlooded:
-              sensor.flood_status &&
-              sensor.flood_status !== "NO_FLOOD" &&
-              sensor.flood_status !== "SENSOR_ERROR",
-          }));
-
-          console.log("📡 Loaded sensors:", sensors.length);
-          console.log(
-            "🌊 Flooded sensors:",
-            sensors.filter((s) => s.isFlooded).length
-          );
-
-          resolve(sensors);
+          checkAndResolve();
         },
         (error) => {
-          console.error("❌ Error loading sensors:", error);
-          reject(error);
-        }
+          console.error("❌ Error loading /sensors:", error);
+          hasError = true;
+          checkAndResolve();
+        },
+        { onlyOnce: true }
+      );
+
+      // 2. Đọc từ /iotData
+      const iotDataRef = ref(this.db, "iotData");
+      onValue(
+        iotDataRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            Object.entries(data).forEach(([id, sensor]) => {
+              allSensors[`iot_${id}`] = processSensor(`iot_${id}`, sensor, "iotData");
+            });
+            console.log(`📡 Loaded ${Object.keys(data).length} sensors from /iotData`);
+          }
+          checkAndResolve();
+        },
+        (error) => {
+          console.error("❌ Error loading /iotData:", error);
+          hasError = true;
+          checkAndResolve();
+        },
+        { onlyOnce: true }
+      );
+
+      // 3. Đọc từ /flood_zones
+      const floodZonesRef = ref(this.db, "flood_zones");
+      onValue(
+        floodZonesRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            Object.entries(data).forEach(([zoneId, zoneData]) => {
+              // Chỉ thêm nếu đang cảnh báo
+              if (["warning", "danger", "critical"].includes(zoneData.alert_status?.toLowerCase())) {
+                const sensor = {
+                  device_id: zoneData.zone_name || zoneId,
+                  latitude: zoneData.latitude || zoneData.lat,
+                  longitude: zoneData.longitude || zoneData.lon,
+                  water_level_cm: zoneData.current_level || 0,
+                  flood_status: zoneData.alert_status?.toUpperCase() || "WARNING",
+                  timestamp: zoneData.last_updated || Date.now(),
+                };
+                allSensors[`zone_${zoneId}`] = processSensor(`zone_${zoneId}`, sensor, "flood_zones");
+              }
+            });
+            console.log(`📡 Loaded ${Object.keys(data).length} flood zones from /flood_zones`);
+          }
+          checkAndResolve();
+        },
+        (error) => {
+          console.error("❌ Error loading /flood_zones:", error);
+          hasError = true;
+          checkAndResolve();
+        },
+        { onlyOnce: true }
       );
     });
   }
 
   /**
    * Lắng nghe realtime updates từ sensors
+   * Đọc từ CẢ 3 nguồn: sensors, iotData, và flood_zones (giống backend)
    * @param {Function} callback - Callback function nhận array sensors
    * @returns {Function} Unsubscribe function
    */
   subscribeSensors(callback) {
-    const sensorsRef = ref(this.db, "sensors");
     const listenerId = Date.now().toString();
+    const allSensors = {};
+    let sensorsLoaded = 0;
+    const totalSources = 3; // sensors, iotData, flood_zones
 
-    const listener = onValue(sensorsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data) {
-        console.log("⚠️ No sensor data in Firebase");
-        callback([]);
-        return;
+    // Helper function để process sensor data
+    const processSensor = (id, sensor, source = "sensors") => {
+      const waterLevel = sensor.water_level_cm || 0;
+      const hasWater = waterLevel > 0;
+      const hasFloodStatus =
+        sensor.flood_status && sensor.flood_status !== "NO_FLOOD";
+
+      const isFlooded = hasWater || hasFloodStatus;
+
+      return {
+        id,
+        ...sensor,
+        isFlooded: isFlooded,
+        source: source, // Đánh dấu nguồn dữ liệu
+      };
+    };
+
+    // Helper function để merge và callback
+    const mergeAndCallback = () => {
+      sensorsLoaded++;
+      if (sensorsLoaded === totalSources) {
+        // Convert object to array
+        const sensorsArray = Object.entries(allSensors).map(([id, sensor]) => sensor);
+        
+        console.log(
+          `🌊 Total sensors from all sources: ${sensorsArray.length}, Flooded: ${
+            sensorsArray.filter((s) => s.isFlooded).length
+          }`
+        );
+        callback(sensorsArray);
       }
+    };
 
-      const sensors = Object.entries(data).map(([id, sensor]) => {
-        // Log tọa độ thô từ Firebase
-        console.log(`📍 RAW COORDINATES from Firebase for sensor "${id}":`, {
-          latitude: sensor.latitude,
-          longitude: sensor.longitude,
-          latitude_type: typeof sensor.latitude,
-          longitude_type: typeof sensor.longitude,
+    // 1. Đọc từ /sensors (sensor data chính)
+    const sensorsRef = ref(this.db, "sensors");
+    const sensorsListener = onValue(sensorsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        Object.entries(data).forEach(([id, sensor]) => {
+          allSensors[id] = processSensor(id, sensor, "sensors");
         });
-
-        // Sensor được coi là "ngập" nếu:
-        // 1. Có water_level_cm > 0 (nước đang tăng)
-        // 2. HOẶC flood_status khác "NO_FLOOD" (bao gồm cả SENSOR_ERROR với water_level > 0)
-        const waterLevel = sensor.water_level_cm || 0;
-        const hasWater = waterLevel > 0;
-        const hasFloodStatus =
-          sensor.flood_status && sensor.flood_status !== "NO_FLOOD";
-
-        const isFlooded = hasWater || hasFloodStatus;
-
-        console.log(`📡 Sensor ${id}:`, {
-          flood_status: sensor.flood_status,
-          water_level: sensor.water_level_cm,
-          hasWater: hasWater,
-          hasFloodStatus: hasFloodStatus,
-          isFlooded: isFlooded,
-          coords: { lat: sensor.latitude, lng: sensor.longitude },
-        });
-
-        return {
-          id,
-          ...sensor,
-          isFlooded: isFlooded,
-        };
-      });
-
-      console.log(
-        `🌊 Total sensors: ${sensors.length}, Flooded: ${
-          sensors.filter((s) => s.isFlooded).length
-        }`
-      );
-      callback(sensors);
+        console.log(`📡 Loaded ${Object.keys(data).length} sensors from /sensors`);
+      }
+      mergeAndCallback();
     });
 
-    this.listeners.set(listenerId, { ref: sensorsRef, listener });
+    // 2. Đọc từ /iotData (IoT sensor data)
+    const iotDataRef = ref(this.db, "iotData");
+    const iotListener = onValue(iotDataRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        Object.entries(data).forEach(([id, sensor]) => {
+          // Prefix với "iot_" để tránh conflict
+          allSensors[`iot_${id}`] = processSensor(`iot_${id}`, sensor, "iotData");
+        });
+        console.log(`📡 Loaded ${Object.keys(data).length} sensors from /iotData`);
+      }
+      mergeAndCallback();
+    });
+
+    // 3. Đọc từ /flood_zones (mock data từ Firebase - vùng ngập cố định)
+    const floodZonesRef = ref(this.db, "flood_zones");
+    const floodZonesListener = onValue(floodZonesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        Object.entries(data).forEach(([zoneId, zoneData]) => {
+          // Chỉ thêm nếu đang cảnh báo
+          if (["warning", "danger", "critical"].includes(zoneData.alert_status?.toLowerCase())) {
+            // Convert flood zone thành sensor format
+            const sensor = {
+              device_id: zoneData.zone_name || zoneId,
+              latitude: zoneData.latitude || zoneData.lat,
+              longitude: zoneData.longitude || zoneData.lon,
+              water_level_cm: zoneData.current_level || 0,
+              flood_status: zoneData.alert_status?.toUpperCase() || "WARNING",
+              timestamp: zoneData.last_updated || Date.now(),
+            };
+            allSensors[`zone_${zoneId}`] = processSensor(`zone_${zoneId}`, sensor, "flood_zones");
+          }
+        });
+        console.log(`📡 Loaded ${Object.keys(data).length} flood zones from /flood_zones`);
+      }
+      mergeAndCallback();
+    });
+
+    // Lưu tất cả listeners để cleanup
+    this.listeners.set(listenerId, {
+      refs: [sensorsRef, iotDataRef, floodZonesRef],
+      listeners: [sensorsListener, iotListener, floodZonesListener],
+    });
 
     // Return unsubscribe function
     return () => {
-      off(sensorsRef, "value", listener);
+      off(sensorsRef, "value", sensorsListener);
+      off(iotDataRef, "value", iotListener);
+      off(floodZonesRef, "value", floodZonesListener);
       this.listeners.delete(listenerId);
     };
   }
@@ -252,8 +370,22 @@ class SensorService {
    * Cleanup tất cả listeners
    */
   cleanup() {
-    this.listeners.forEach(({ ref: dbRef, listener }) => {
-      off(dbRef, "value", listener);
+    this.listeners.forEach(({ refs, listeners }) => {
+      if (refs && listeners) {
+        // Multiple listeners (new format)
+        refs.forEach((dbRef, index) => {
+          if (listeners[index]) {
+            off(dbRef, "value", listeners[index]);
+          }
+        });
+      } else {
+        // Single listener (old format for backward compatibility)
+        const dbRef = refs || this.listeners.get("ref");
+        const listener = listeners || this.listeners.get("listener");
+        if (dbRef && listener) {
+          off(dbRef, "value", listener);
+        }
+      }
     });
     this.listeners.clear();
   }
