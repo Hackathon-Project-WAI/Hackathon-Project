@@ -50,11 +50,10 @@ class PersonalizedAlertController {
       for (const alert of analysis.alerts) {
         try {
           // Tạo prompt cá nhân hóa
-          const aiPrompt =
-            personalizedAlertService.createPersonalizedPrompt(
-              analysis.user,
-              alert
-            );
+          const aiPrompt = personalizedAlertService.createPersonalizedPrompt(
+            analysis.user,
+            alert
+          );
 
           // Gọi Gemini AI
           const generatedAlert = await geminiClient.generateStructuredContent(
@@ -151,8 +150,7 @@ class PersonalizedAlertController {
     try {
       const { userId } = req.params;
 
-      const locations =
-        await personalizedAlertService.getUserLocations(userId);
+      const locations = await personalizedAlertService.getUserLocations(userId);
 
       return res.json({
         success: true,
@@ -175,13 +173,7 @@ class PersonalizedAlertController {
    */
   async analyzeWeatherAlert(req, res) {
     try {
-      const {
-        lat,
-        lon,
-        to,
-        userId,
-        locationName,
-      } = req.body || {};
+      const { lat, lon, to, userId, locationName } = req.body || {};
 
       const latitude =
         typeof lat === "string" ? Number.parseFloat(lat) : Number(lat);
@@ -223,7 +215,7 @@ class PersonalizedAlertController {
       );
 
       console.log(`📊 Phân tích mưa 24h:`, {
-        rainfall24h: analysis.rainfall.total24h + 'mm',
+        rainfall24h: analysis.rainfall.total24h + "mm",
         level: analysis.classification.name,
         alertLevel: analysis.classification.alertLevel,
       });
@@ -245,12 +237,13 @@ class PersonalizedAlertController {
 
       // 4. Lấy thông tin user (nếu có userId)
       let user = { name: "Bạn", email: to };
-      
+
       if (userId) {
         try {
           const admin = require("firebase-admin");
           const authUser = await admin.auth().getUser(userId);
-          user.name = authUser.displayName || authUser.email?.split('@')[0] || "Bạn";
+          user.name =
+            authUser.displayName || authUser.email?.split("@")[0] || "Bạn";
           user.email = authUser.email || to;
         } catch (error) {
           console.log(`⚠️ Không lấy được user info: ${error.message}`);
@@ -347,10 +340,7 @@ class PersonalizedAlertController {
    */
   async checkSensorBasedAlert(req, res) {
     try {
-      const {
-        userId,
-        sendEmail: shouldSendEmail = true,
-      } = req.body;
+      const { userId, sendEmail: shouldSendEmail = true } = req.body;
 
       if (!userId) {
         return res.status(400).json({
@@ -362,9 +352,13 @@ class PersonalizedAlertController {
       console.log(`🔍 [SENSOR-BASED] Đang phân tích cho user: ${userId}`);
 
       // 1. Phân tích với sensor data
-      const analysis = await sensorBasedAlertService.analyzeUserLocations(userId);
+      const analysis = await sensorBasedAlertService.analyzeUserLocations(
+        userId
+      );
 
-      console.log(`📊 Kết quả: ${analysis.affectedLocations}/${analysis.totalLocations} locations bị ảnh hưởng`);
+      console.log(
+        `📊 Kết quả: ${analysis.affectedLocations}/${analysis.totalLocations} locations bị ảnh hưởng`
+      );
 
       if (analysis.affectedLocations === 0) {
         return res.json({
@@ -380,19 +374,23 @@ class PersonalizedAlertController {
 
       // 2. Gom alerts theo location (tránh spam nhiều emails cho cùng 1 location)
       const locationAlertsMap = {};
-      
+
       for (const alert of analysis.alerts) {
         const locId = alert.location.id;
         if (!locationAlertsMap[locId]) {
           locationAlertsMap[locId] = {
             location: alert.location,
-            sensors: []
+            sensors: [],
           };
         }
         locationAlertsMap[locId].sensors.push(alert.sensor);
       }
 
-      console.log(`📧 Sẽ gửi ${Object.keys(locationAlertsMap).length} email (1 email/location)`);
+      console.log(
+        `📧 Sẽ gửi ${
+          Object.keys(locationAlertsMap).length
+        } email (1 email/location)`
+      );
 
       // 3. Tạo cảnh báo AI cho từng location (gom tất cả sensors)
       const emailResults = [];
@@ -400,15 +398,18 @@ class PersonalizedAlertController {
       for (const [locId, data] of Object.entries(locationAlertsMap)) {
         try {
           const { location, sensors } = data;
-          
-          // Tạo prompt với TẤT CẢ sensors của location này
-          const aiPrompt = sensorBasedAlertService.createPersonalizedPromptMultipleSensors(
-            analysis.user,
-            location,
-            sensors
-          );
 
-          console.log(`🤖 Đang tạo cảnh báo AI cho "${location.name}" (${sensors.length} sensors)...`);
+          // Tạo prompt với TẤT CẢ sensors của location này
+          const aiPrompt =
+            sensorBasedAlertService.createPersonalizedPromptMultipleSensors(
+              analysis.user,
+              location,
+              sensors
+            );
+
+          console.log(
+            `🤖 Đang tạo cảnh báo AI cho "${location.name}" (${sensors.length} sensors)...`
+          );
 
           // Gọi Gemini AI
           const generatedAlert = await geminiClient.generateStructuredContent(
@@ -423,17 +424,15 @@ class PersonalizedAlertController {
             }
           );
 
-          console.log(
-            `✅ AI tạo cảnh báo: ${generatedAlert.subject}`
-          );
+          console.log(`✅ AI tạo cảnh báo: ${generatedAlert.subject}`);
 
           // Gửi email + Telegram SONG SONG (parallel)
           let emailResult = { success: false };
           let telegramResult = { success: false, skipped: true };
-          
+
           if (shouldSendEmail && analysis.user.email) {
             console.log(`📤 Đang gửi cảnh báo song song: Email + Telegram...`);
-            
+
             // Gửi song song với Promise.allSettled
             const alertResult = await telegramAlertService.sendAlertWithEmail(
               userId,
@@ -453,19 +452,31 @@ class PersonalizedAlertController {
             telegramResult = alertResult.telegram.result;
 
             console.log(`⏱️ Hoàn thành trong ${alertResult.totalTime}ms`);
-            console.log(`📧 Email: ${emailResult.success ? '✅ Thành công' : '❌ Thất bại'}`);
-            console.log(`📱 Telegram: ${telegramResult.success ? '✅ Thành công' : telegramResult.skipped ? '⏭️ Bỏ qua' : '❌ Thất bại'}`);
+            console.log(
+              `📧 Email: ${
+                emailResult.success ? "✅ Thành công" : "❌ Thất bại"
+              }`
+            );
+            console.log(
+              `📱 Telegram: ${
+                telegramResult.success
+                  ? "✅ Thành công"
+                  : telegramResult.skipped
+                  ? "⏭️ Bỏ qua"
+                  : "❌ Thất bại"
+              }`
+            );
           }
 
           // Lưu log vào Firebase (1 record cho location, list tất cả sensors)
           const db = require("firebase-admin").database();
           const alertRef = db.ref(`userProfiles/${userId}/sensorAlerts`).push();
-          
+
           await alertRef.set({
             locationId: location.id,
             locationName: location.name,
             sensorsCount: sensors.length,
-            sensors: sensors.map(s => ({
+            sensors: sensors.map((s) => ({
               sensorId: s.sensorId,
               sensorName: s.sensorName,
               distance: s.distance,
@@ -527,4 +538,3 @@ class PersonalizedAlertController {
 }
 
 module.exports = new PersonalizedAlertController();
-
