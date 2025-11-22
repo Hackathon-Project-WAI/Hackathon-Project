@@ -1,0 +1,84 @@
+/* Zoom Controls - Modern UI */
+
+.zoom-controls-container {
+  position: absolute;
+  bottom: 2rem;
+  right: 1rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Glass Panel Effect */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+.zoom-panel {
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.zoom-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.zoom-btn:hover {
+  background: white;
+  color: #4f46e5;
+}
+
+.zoom-separator {
+  height: 1px;
+  background: rgba(203, 213, 225, 0.5);
+  margin: 0 auto;
+  width: 1.5rem;
+}
+
+.recenter-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  box-shadow: 0 8px 16px 0 rgba(31, 38, 135, 0.15);
+}
+
+.recenter-btn:hover {
+  background: white;
+  color: #4f46e5;
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .zoom-controls-container {
+    bottom: 1rem;
+    right: 0.5rem;
+  }
+}
+
+

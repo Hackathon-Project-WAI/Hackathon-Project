@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import WeatherDisplay from "../components/WeatherDisplay";
+// import WeatherDisplay from "../components/WeatherDisplay";
 import "./WeatherDetailPage.css";
 
 const WeatherDetailPage = () => {

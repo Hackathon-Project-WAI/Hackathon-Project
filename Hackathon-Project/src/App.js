@@ -8,19 +8,19 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-import MapViewRefactored from "./components/MapViewRefactored";
-import WeatherWidget from "./components/WeatherWidget";
+// import MapViewRefactored from "./components/MapViewRefactored";
+// import WeatherWidget from "./components/WeatherWidget";
 import WeatherDetailPage from "./pages/WeatherDetailPage";
-import WeatherDropdown from "./components/WeatherDropdown";
+// import WeatherDropdown from "./components/WeatherDropdown";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Profile from "./pages/Profile";
-import AdminPage from "./pages/AdminPage";
-import APIDemo from "./pages/APIDemo";
-import SensorsPage from "./pages/SensorsPage";
+// import Profile from "./pages/Profile";
+// import AdminPage from "./pages/AdminPage";
+// import APIDemo from "./pages/APIDemo";
+// import SensorsPage from "./pages/SensorsPage";
 import authService from "./services/authService";
 import floodData from "./data/floodProneAreas.json";
-import TopNavigation from "./components/TopNavigation";
+// import TopNavigation from "./components/TopNavigation";
 
 // Icons cho GradientTabs
 const MapIcon = ({ className }) => (
