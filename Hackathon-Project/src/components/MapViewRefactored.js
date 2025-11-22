@@ -40,7 +40,7 @@ import "./MapViewRefactored.css";
 const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   console.log("🚀 MapViewRefactored mounted/updated", {
     placesCount: places?.length,
-    floodZonesCount: floodZones?.length,
+    mockFloodZones: floodZones?.length,
     hasApiKey: !!apiKey,
   });
 
@@ -88,14 +88,51 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     }
   }, [userLocation]);
 
+  // ========== MERGE FLOOD ZONES: Mock + Sensor ==========
+  
+  // Subscribe to sensor data và convert thành flood zones
+  useEffect(() => {
+    console.log("🚀 useEffect for sensors - mapReady:", mapReady);
+
+    if (!mapReady) {
+      console.log("⏳ Map not ready yet, skipping sensor subscription");
+      return;
+    }
+
+    console.log("📡 Subscribing to sensor data...");
+
+    const unsubscribe = sensorService.subscribeSensors((sensors) => {
+      console.log(`🌊 Received ${sensors.length} sensors from Firebase`);
+
+      // Convert sensors thành flood zones
+      const zones = sensorService.sensorsToFloodZones(sensors, 100);
+      console.log(`🔵 Created ${zones.length} flood zones from sensors`);
+
+      setSensorFloodZones(zones);
+    });
+
+    return () => {
+      console.log("🔌 Unsubscribing from sensor data");
+      unsubscribe();
+    };
+  }, [mapReady]);
+
+  // ✅ Merge flood zones từ mock JSON và sensors TRƯỚC KHI truyền vào useRouting
+  const combinedFloodZones = useMemo(() => {
+    const combined = [...floodZones, ...sensorFloodZones];
+    console.log(
+      `🗺️ Combined flood zones for routing: ${floodZones.length} mock + ${sensorFloodZones.length} sensors = ${combined.length} total`
+    );
+    return combined;
+  }, [floodZones, sensorFloodZones]);
+
+  // ✅ TRUYỀN combinedFloodZones vào useRouting thay vì chỉ floodZones
   const {
     routeStart,
     routeEnd,
     allRoutes,
     selectedRouteIndex,
     selectedRoute,
-    // routeInfo,
-    // routeWarning,
     loading,
     error: routeError, // ✅ Thêm error từ hook
     geminiRecommendation,
@@ -104,7 +141,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     clearRoute,
     setRouteStart,
     setRouteEnd,
-  } = useRouting(getRoutingService, floodZones);
+  } = useRouting(getRoutingService, combinedFloodZones);
 
   // Weather overlay hook
   useWeatherOverlay(map, mapReady, weatherOverlayVisible);
@@ -153,15 +190,8 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     };
   }, [mapReady]);
 
-  // Merge flood zones từ file JSON và sensors
-  const combinedFloodZones = useMemo(() => {
-    const combined = [...floodZones, ...sensorFloodZones];
-    console.log(
-      `🗺️ Combined flood zones: ${floodZones.length} static + ${sensorFloodZones.length} sensors = ${combined.length} total`
-    );
-    return combined;
-  }, [floodZones, sensorFloodZones]);
-
+  // ========== RENDER FLOOD ZONES ON MAP ==========
+  
   useEffect(() => {
     if (
       !mapReady ||

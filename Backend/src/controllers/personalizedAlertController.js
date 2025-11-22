@@ -171,17 +171,16 @@ class PersonalizedAlertController {
 
   /**
    * POST /api/analyze-weather-alert
-   * Phân tích thời tiết theo tọa độ + gửi cảnh báo AI
+   * Phân tích thời tiết theo LƯỢNG MƯA 24H + gửi cảnh báo AI
    */
   async analyzeWeatherAlert(req, res) {
     try {
       const {
         lat,
         lon,
-        areaId,
         to,
-        minRiskLevel = 1,
-        includeAllAreas = false,
+        userId,
+        locationName,
       } = req.body || {};
 
       const latitude =
@@ -197,8 +196,9 @@ class PersonalizedAlertController {
       }
 
       const weatherService = require("../services/weatherService");
-      const floodPredictionService = require("../services/floodPredictionService");
+      const rainfallAnalysisService = require("../services/rainfallAnalysisService");
 
+      // 1. Lấy dự báo thời tiết
       const hourlyForecast = await weatherService.getHourlyForecast(
         latitude,
         longitude
@@ -212,120 +212,53 @@ class PersonalizedAlertController {
         });
       }
 
-      const predictions = floodPredictionService.analyzeForecast(
+      // 2. Phân tích theo LƯỢNG MƯA 24H (Mưa vừa, Mưa to, Mưa rất to, Mưa đặc biệt to)
+      const analysis = rainfallAnalysisService.analyzeWeatherForecast(
         hourlyForecast,
         {
-          maxAreas: includeAllAreas
-            ? floodPredictionService.getAllFloodProneAreas().length
-            : 5,
+          lat: latitude,
+          lon: longitude,
+          name: locationName || "Khu vực của bạn",
         }
       );
 
-      if (!predictions.length) {
+      console.log(`📊 Phân tích mưa 24h:`, {
+        rainfall24h: analysis.rainfall.total24h + 'mm',
+        level: analysis.classification.name,
+        alertLevel: analysis.classification.alertLevel,
+      });
+
+      // 3. Kiểm tra có cần cảnh báo không (từ "Mưa to" trở lên)
+      if (!analysis.alert.shouldAlert) {
         return res.json({
           success: true,
-          message: "Không phát hiện nguy cơ ngập dựa trên dữ liệu hiện tại",
+          message: `Lượng mưa dự báo (${analysis.rainfall.total24h}mm) trong ngưỡng an toàn. Không cần cảnh báo.`,
           analysis: {
-            forecastSamples: hourlyForecast.length,
-            predictions: [],
-            input: { lat: latitude, lon: longitude },
+            rainfall: analysis.rainfall,
+            classification: analysis.classification,
+            location: analysis.location,
           },
         });
       }
 
-      let selectedArea = floodPredictionService.getAreaById(areaId);
-      const nearestInfo = floodPredictionService.findNearestArea(
-        latitude,
-        longitude
-      );
+      console.log(`⚠️ Kích hoạt cảnh báo: ${analysis.classification.name}`);
 
-      if (!selectedArea && nearestInfo) {
-        selectedArea = nearestInfo.area;
+      // 4. Lấy thông tin user (nếu có userId)
+      let user = { name: "Bạn", email: to };
+      
+      if (userId) {
+        try {
+          const admin = require("firebase-admin");
+          const authUser = await admin.auth().getUser(userId);
+          user.name = authUser.displayName || authUser.email?.split('@')[0] || "Bạn";
+          user.email = authUser.email || to;
+        } catch (error) {
+          console.log(`⚠️ Không lấy được user info: ${error.message}`);
+        }
       }
 
-      if (!selectedArea) {
-        selectedArea = predictions[0].area;
-      }
-
-      const selectedPrediction =
-        predictions.find((entry) => entry.area.id === selectedArea.id) ||
-        predictions[0];
-
-      const riskThreshold = Number.isFinite(Number(minRiskLevel))
-        ? Number(minRiskLevel)
-        : 1;
-
-      const analysis = {
-        area: selectedPrediction.area,
-        prediction: selectedPrediction.prediction,
-        nearestArea: nearestInfo,
-        forecastSamples: hourlyForecast.length,
-        input: {
-          lat: latitude,
-          lon: longitude,
-          riskThreshold,
-        },
-      };
-
-      if (includeAllAreas) {
-        analysis.topPredictions = predictions;
-      }
-
-      const shouldTriggerAlert =
-        selectedPrediction.prediction.floodRisk >= riskThreshold;
-
-      if (!shouldTriggerAlert) {
-        return res.json({
-          success: true,
-          message:
-            "Không kích hoạt cảnh báo vì cấp độ nguy cơ thấp hơn ngưỡng yêu cầu",
-          analysis,
-        });
-      }
-
-      // Tạo AI alert
-      const severityLabels = [
-        "AN TOÀN",
-        "CẢNH BÁO",
-        "NGUY HIỂM",
-        "NGHIÊM TRỌNG",
-      ];
-      const intensityLabels = ["nhẹ", "trung bình", "nặng", "rất nặng"];
-
-      const { area, prediction } = selectedPrediction;
-      const intensityLabel =
-        intensityLabels[prediction.details.intensity] || "không xác định";
-
-      const aiPrompt = `
-Bạn là một hệ thống AI chuyên tạo cảnh báo ngập lụt khẩn cấp bằng tiếng Việt.
-
-THÔNG TIN KHU VỰC:
-- Tên khu vực: ${area.name} (${area.district})
-- Tọa độ: ${area.coords.lat}, ${area.coords.lon}
-- Độ cao địa hình: ${area.elevation} m
-- Khả năng thoát nước: ${area.drainageCapacity} mm/h
-- Ngưỡng cảnh báo (mm/3h): vàng=${area.threshold.warning}, cam=${area.threshold.danger}, đỏ=${area.threshold.critical}
-
-DỮ LIỆU DỰ BÁO MƯA:
-- Tổng lượng mưa 3 giờ tới: ${prediction.details.rainfall3h} mm
-- Tổng lượng mưa 6 giờ tới: ${prediction.details.rainfall6h} mm
-- Tổng lượng mưa 12 giờ tới: ${prediction.details.rainfall12h} mm
-- Cường độ mưa: ${intensityLabel}
-- Điểm rủi ro tổng hợp: ${prediction.riskScore}/100
-- Cấp độ nguy hiểm hệ thống: ${severityLabels[prediction.floodRisk]}
-- Dự báo độ sâu ngập: ${prediction.details.predictedDepth} cm
-- Ước tính thời gian ngập: ${prediction.details.estimatedDuration} phút
-
-KHYẾN NGHỊ HỆ THỐNG: ${prediction.recommendation}
-
-YÊU CẦU ĐẦU RA:
-1. Xác định cấp độ nguy hiểm (thấp/trung bình/cao) và tốc độ nước dâng (nhanh/chậm/ổn định) dựa trên dữ liệu.
-2. Soạn nội dung email dưới 150 từ, định dạng HTML đơn giản (dùng <p>, <ul>, <li>, <b>, <br>, KHÔNG dùng Markdown).
-3. Đưa ra hành động cụ thể cho người dân và chính quyền.
-4. Ngôn ngữ khẩn cấp, rõ ràng, bằng tiếng Việt chuẩn.
-
-TRẢ VỀ JSON THUẦN: {"subject": "...", "htmlBody": "..."}
-`;
+      // 5. Tạo prompt AI theo phân loại mưa
+      const aiPrompt = rainfallAnalysisService.createAIPrompt(analysis, user);
 
       const generatedAlert = await geminiClient.generateStructuredContent(
         aiPrompt,
@@ -340,16 +273,22 @@ TRẢ VỀ JSON THUẦN: {"subject": "...", "htmlBody": "..."}
       );
 
       console.log(
-        "✅ Gemini AI tạo cảnh báo thời tiết:",
+        `✅ Gemini AI tạo cảnh báo (${analysis.classification.name}):`,
         generatedAlert.subject || "(không có subject)"
       );
 
+      console.log(
+        `✅ Gemini AI tạo cảnh báo (${analysis.classification.name}):`,
+        generatedAlert.subject || "(không có subject)"
+      );
+
+      // 6. Gửi email (nếu có địa chỉ)
       const recipientList = to
         ? Array.isArray(to)
           ? to
           : [to]
-        : process.env.ALERT_EMAIL_RECIPIENTS
-        ? process.env.ALERT_EMAIL_RECIPIENTS.split(",")
+        : user.email
+        ? [user.email]
         : [];
 
       const emailResults = [];
@@ -374,14 +313,19 @@ TRẢ VỀ JSON THUẦN: {"subject": "...", "htmlBody": "..."}
 
       if (!recipientList.length) {
         console.warn(
-          "⚠️ Không có email nhận cảnh báo. Cấu hình ALERT_EMAIL_RECIPIENTS hoặc truyền 'to' trong request."
+          "⚠️ Không có email nhận cảnh báo. Truyền 'to' hoặc 'userId' trong request."
         );
       }
 
       return res.json({
         success: true,
         alert: generatedAlert,
-        analysis,
+        analysis: {
+          location: analysis.location,
+          rainfall: analysis.rainfall,
+          classification: analysis.classification,
+          alertInfo: analysis.alert,
+        },
         emails: emailResults,
       });
     } catch (error) {
