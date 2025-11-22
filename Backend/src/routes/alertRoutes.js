@@ -70,6 +70,64 @@ router.post(
 );
 
 // ==========================================
+// 📧 PREMIUM EMAIL TEMPLATE - Test endpoint
+// ==========================================
+router.post("/send-premium-alert", async (req, res) => {
+  try {
+    const { to, alertData } = req.body;
+
+    if (!to) {
+      return res.status(400).json({
+        success: false,
+        error: "Thiếu email nhận (to)",
+      });
+    }
+
+    const emailService = require("../email/emailService");
+
+    // Default data nếu không có alertData
+    const defaultAlertData = {
+      location: "Đà Nẵng",
+      riskLevel: "CAO",
+      alertLevel: "Mức báo động 3",
+      waterLevel_cm: 120,
+      maxWaterLevel: 150,
+      threshold: "Vượt mức an toàn 30cm",
+      rateOfChange: "Nhanh",
+      rateDetail: "+10cm / 5 phút",
+      description: "RẤT NGUY HIỂM",
+    };
+
+    const finalAlertData = alertData || defaultAlertData;
+
+    console.log("📧 Gửi Premium Alert đến:", to);
+    console.log("📊 Alert Data:", finalAlertData);
+
+    const result = await emailService.sendPremiumFloodAlert(to, finalAlertData);
+
+    if (result.success) {
+      return res.json({
+        success: true,
+        message: "Premium alert email đã được gửi thành công!",
+        messageId: result.messageId,
+        alertData: finalAlertData,
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    console.error("❌ Lỗi gửi premium alert:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// ==========================================
 // ⚙️ ALERT SETTINGS - User Configuration
 // ==========================================
 // Lấy cấu hình cảnh báo

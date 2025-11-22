@@ -215,10 +215,22 @@ const sendTestEmail = async (to) => {
   return await sendEmail(to, subject, html, text);
 };
 
+// Hàm gửi Premium Flood Alert (Template đẹp với cm hoặc %)
+const sendPremiumFloodAlert = async (to, alertData) => {
+  const EmailTemplates = require("./templates");
+  const template = EmailTemplates.premiumFloodAlert(alertData);
+  
+  console.log(`📧 Đang gửi Premium Flood Alert đến ${to}...`);
+  console.log(`📊 Dữ liệu: ${alertData.waterLevel_cm ? alertData.waterLevel_cm + 'cm' : alertData.waterPercent + '%'}`);
+  
+  return await sendEmail(to, template.subject, template.html);
+};
+
 module.exports = {
   sendEmail,
   sendTestEmail,
   sendFloodAlert,
   sendWeatherUpdate,
   sendAIFloodAlert,
+  sendPremiumFloodAlert,
 };

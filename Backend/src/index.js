@@ -30,6 +30,7 @@ app.get("/", (req, res) => {
       health: "GET /",
       testEmail: "POST /api/send-test-email",
       floodAlert: "POST /api/send-flood-alert",
+      premiumAlert: "POST /api/send-premium-alert", // NEW ⭐
       generateAIAlert: "POST /api/generate-flood-alert",
       checkFirebase: "POST /api/check-firebase-and-alert",
       checkIoT: "POST /api/check-iot-data",

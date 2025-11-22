@@ -1,0 +1,81 @@
+==================================================
+🔥 FIREBASE QUICK SETUP - COPY VÀO FILE .env
+==================================================
+
+ĐÃ CẬP NHẬT DATABASE URL MỚI!
+
+--------------------------------------------------
+📁 Location: Backend/.env
+--------------------------------------------------
+
+COPY TOÀN BỘ CODE DƯỚI ĐÂY VÀO FILE Backend/.env:
+
+==================================================
+
+# Firebase Configuration
+FIREBASE_DATABASE_URL=https://hackathon-weather-634bf-default-rtdb.asia-southeast1.firebasedatabase.app
+FIREBASE_SERVICE_ACCOUNT_KEY=./configs/serviceAccountKey.json
+
+# Email Configuration
+EMAIL_USER=viettaiifptudh@gmail.com
+EMAIL_PASS=your-gmail-app-password
+EMAIL_FROM="Flood Alert System <viettaiifptudh@gmail.com>"
+ALERT_EMAIL_RECIPIENTS=viettaiifptudh@gmail.com
+
+# API Keys (get from respective platforms)
+GEMINI_API_KEY=your-gemini-api-key
+OPENWEATHER_API_KEY=your-openweather-api-key
+HERE_API_KEY=your-here-api-key
+
+# Telegram (optional)
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+
+# Server Config
+PORT=4000
+NODE_ENV=development
+ENABLE_FIREBASE_LISTENER=true
+
+==================================================
+
+✅ ĐÃ XÁC NHẬN:
+- serviceAccountKey.json có trong Backend/configs/ ✓
+- Database URL đã được cập nhật ✓
+
+📝 NEXT STEPS:
+
+1. Tạo file .env nếu chưa có:
+   cd Backend
+   touch .env
+
+2. Copy toàn bộ config ở trên vào Backend/.env
+
+3. Cập nhật các giá trị:
+   - EMAIL_PASS (Gmail App Password)
+   - GEMINI_API_KEY (từ Google AI Studio)
+   - OPENWEATHER_API_KEY (từ OpenWeather)
+   - HERE_API_KEY (từ HERE Platform)
+
+4. Start server:
+   npm start
+
+5. Kiểm tra log:
+   ✅ Firebase Admin SDK khởi tạo thành công
+   🔥 Firebase IoT Listener đã bật
+
+==================================================
+
+🎯 CODE SẴN SÀNG SỬ DỤNG:
+
+var admin = require("firebase-admin");
+var serviceAccount = require("./configs/serviceAccountKey.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://hackathon-weather-634bf-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+
+☝️ Code này ĐÃ CÓ SẴN trong firebaseClient.js
+   Bạn chỉ cần update .env là xong!
+
+==================================================
+
