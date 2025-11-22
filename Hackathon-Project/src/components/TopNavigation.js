@@ -48,8 +48,12 @@ const TopNavigation = ({ user, onLogout }) => {
 
   const checkTelegramLinkStatus = async () => {
     try {
-      console.log("🔍 Checking Telegram status for user:", user.uid, user.email);
-      
+      console.log(
+        "🔍 Checking Telegram status for user:",
+        user.uid,
+        user.email
+      );
+
       const { checkTelegramStatus } = await import("../api/telegramApi");
       const response = await checkTelegramStatus(user.uid);
 

@@ -20,6 +20,7 @@ import APIDemo from "./pages/APIDemo";
 import SensorsPage from "./pages/SensorsPage";
 import AutoAlertPage from "./pages/AutoAlertPage";
 import authService from "./services/authService";
+import userProfileService from "./services/userProfileService";
 import floodData from "./data/floodProneAreas.json";
 import TopNavigation from "./components/TopNavigation";
 
@@ -117,6 +118,7 @@ function App() {
   const [floodZones, setFloodZones] = useState([]);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [userLocations, setUserLocations] = useState([]); // User saved locations
 
   // Lấy API key từ environment variable
   const API_KEY = process.env.REACT_APP_HERE_API_KEY || "";
@@ -130,13 +132,42 @@ function App() {
       setAuthLoading(false);
       if (currentUser) {
         console.log("✅ User logged in:", currentUser.email);
+        // Load user locations khi user đăng nhập
+        loadUserLocations(currentUser.uid);
       } else {
         console.log("❌ No user - should redirect to login");
+        setUserLocations([]); // Clear locations khi logout
       }
     });
 
     return () => unsubscribe();
   }, []);
+
+  // 📍 Load user saved locations
+  const loadUserLocations = async (userId) => {
+    try {
+      console.log("📍 Loading user locations for:", userId);
+      const result = await userProfileService.getLocations(userId);
+      if (result.success && result.data) {
+        // Filter chỉ lấy locations có tọa độ hợp lệ
+        const validLocations = result.data.filter(
+          (loc) =>
+            loc.coords &&
+            typeof loc.coords.lat === "number" &&
+            typeof loc.coords.lon === "number" &&
+            loc.status !== "deleted"
+        );
+        console.log(`✅ Loaded ${validLocations.length} valid user locations`);
+        setUserLocations(validLocations);
+      } else {
+        console.log("⚠️ No user locations found or error:", result.error);
+        setUserLocations([]);
+      }
+    } catch (error) {
+      console.error("❌ Error loading user locations:", error);
+      setUserLocations([]);
+    }
+  };
 
   // 🗺️ Load flood zones data
   useEffect(() => {
@@ -320,6 +351,7 @@ function App() {
                         places={places}
                         apiKey={API_KEY}
                         floodZones={floodZones}
+                        userLocations={userLocations}
                       />
                     </div>
                   </>

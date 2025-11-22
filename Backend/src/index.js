@@ -83,20 +83,13 @@ if (config.firebaseServiceAccountKey && config.firebaseDatabaseURL) {
     // 📱 TELEGRAM BOT LISTENER
     // ==========================================
     // Khởi động Telegram bot để lắng nghe người dùng đăng ký
-    const enableTelegramBot = process.env.ENABLE_TELEGRAM_BOT !== 'false';
-    
-    if (config.telegramBotToken && enableTelegramBot) {
+    if (config.telegramBotToken) {
       console.log("📱 Đang khởi động Telegram Bot Listener...");
       telegramBot.start(config.telegramBotToken).catch((error) => {
         console.error("❌ Lỗi khởi động Telegram Bot:", error.message);
-        if (error.response?.status === 409) {
-          console.error("⚠️ Conflict: Bot đang chạy ở nơi khác. Chỉ 1 instance được phép chạy long polling!");
-        }
       });
-    } else if (!config.telegramBotToken) {
-      console.log("⚠️ Telegram Bot chưa cấu hình (thiếu TELEGRAM_BOT_TOKEN)");
     } else {
-      console.log("ℹ️ Telegram Bot đã tắt (ENABLE_TELEGRAM_BOT=false)");
+      console.log("⚠️ Telegram Bot chưa cấu hình (thiếu TELEGRAM_BOT_TOKEN)");
     }
   } catch (error) {
     console.error("❌ Firebase initialization failed:", error.message);

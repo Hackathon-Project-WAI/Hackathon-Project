@@ -5,7 +5,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { getTelegramQRInfo, getBotInfo, checkTelegramStatus } from "../api/telegramApi";
+import {
+  getTelegramQRInfo,
+  getBotInfo,
+  checkTelegramStatus,
+} from "../api/telegramApi";
 import "./TelegramQRCode.css";
 
 const TelegramQRCode = ({ showModal = false, onClose }) => {
@@ -72,13 +76,13 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
   // Polling để kiểm tra trạng thái liên kết
   const startPolling = () => {
     console.log("🔄 Bắt đầu polling kiểm tra liên kết Telegram...");
-    
+
     pollingIntervalRef.current = setInterval(async () => {
       if (!userIdRef.current) return;
 
       try {
         const response = await checkTelegramStatus(userIdRef.current);
-        
+
         if (response.success && response.data.isLinked) {
           console.log("✅ Phát hiện liên kết thành công!", response.data);
           setIsLinked(true);
@@ -150,7 +154,9 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
               <div className="link-success-banner">
                 <div className="success-icon">✅</div>
                 <h3>Liên kết thành công!</h3>
-                <p>Bạn đã liên kết Telegram thành công. Modal sẽ tự động đóng...</p>
+                <p>
+                  Bạn đã liên kết Telegram thành công. Modal sẽ tự động đóng...
+                </p>
               </div>
             )}
 
@@ -191,10 +197,12 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
                       <strong>Nhấn "Start"</strong> để bắt đầu nhận cảnh báo
                     </li>
                   </ol>
-                  
+
                   <div className="polling-status">
                     <span className="polling-indicator">🔄</span>
-                    <span className="polling-text">Đang chờ bạn quét mã...</span>
+                    <span className="polling-text">
+                      Đang chờ bạn quét mã...
+                    </span>
                   </div>
                 </div>
 
