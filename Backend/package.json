@@ -1,0 +1,37 @@
+{
+  "name": "backend",
+  "version": "2.0.0",
+  "description": "Backend server for Flood Alert System with Telegram Bot integration",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "node src/scripts/checkSetup.js",
+    "bot:listener": "node telegramBotListener.js",
+    "bot:alert": "node telegramAlertTrigger.js",
+    "bot:test": "node testAlert.js",
+    "bot:mock": "node mockFloodAlert.js",
+    "bot:simple": "node telegramBotListenerSimple.js",
+    "bot:alert:simple": "node telegramAlertTriggerSimple.js",
+    "bot:dev:listener": "nodemon telegramBotListener.js",
+    "bot:dev:alert": "nodemon telegramAlertTrigger.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.2",
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.6.0",
+    "nodemailer": "^7.0.10",
+    "qrcode.react": "^4.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

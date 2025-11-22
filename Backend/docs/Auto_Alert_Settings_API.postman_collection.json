@@ -1,0 +1,215 @@
+{
+  "info": {
+    "name": "Auto Alert Settings API",
+    "description": "API để quản lý cảnh báo tự động định kỳ",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "user123",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Get Alert Settings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}"]
+        },
+        "description": "Lấy cấu hình cảnh báo của user"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Update Alert Settings",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"threshold\": 75,\n  \"checkInterval\": 300000,\n  \"email\": \"user@example.com\",\n  \"sensorIds\": [\"SENSOR_ROAD\", \"SENSOR_SEWER\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}"]
+        },
+        "description": "Cập nhật cấu hình cảnh báo:\n- threshold: ngưỡng cảnh báo (0-100%)\n- checkInterval: khoảng thời gian check (milliseconds, tối thiểu 60000)\n- email: email nhận cảnh báo\n- sensorIds: mảng các sensor IDs cần theo dõi"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Toggle Alert ON",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enabled\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}/toggle",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}", "toggle"]
+        },
+        "description": "BẬT cảnh báo tự động cho user"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Toggle Alert OFF",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enabled\": false\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}/toggle",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}", "toggle"]
+        },
+        "description": "TẮT cảnh báo tự động cho user"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Test Alert Now",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}/test",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}", "test"]
+        },
+        "description": "Test gửi cảnh báo ngay lập tức (không đợi scheduler)"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Get Alert Logs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}/logs?limit=20",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}", "logs"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "20",
+              "description": "Số lượng logs muốn lấy (mặc định: 20)"
+            }
+          ]
+        },
+        "description": "Lấy lịch sử các cảnh báo đã gửi"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Delete Alert Settings",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}"]
+        },
+        "description": "Xóa cấu hình cảnh báo của user"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Get Scheduler Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/scheduler/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "scheduler", "status"]
+        },
+        "description": "Kiểm tra trạng thái của Scheduler Service"
+      },
+      "response": []
+    },
+    {
+      "name": "Example: Setup for 5-minute check",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"threshold\": 80,\n  \"checkInterval\": 300000,\n  \"email\": \"your-email@example.com\",\n  \"sensorIds\": [\"SENSOR_ROAD\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}"]
+        },
+        "description": "Ví dụ: Thiết lập check mỗi 5 phút (300000ms), ngưỡng 80%"
+      },
+      "response": []
+    },
+    {
+      "name": "Example: Setup for 10-minute check",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"threshold\": 70,\n  \"checkInterval\": 600000,\n  \"email\": \"your-email@example.com\",\n  \"sensorIds\": [\"SENSOR_ROAD\", \"SENSOR_SEWER\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/alert-settings/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "alert-settings", "{{userId}}"]
+        },
+        "description": "Ví dụ: Thiết lập check mỗi 10 phút (600000ms), ngưỡng 70%"
+      },
+      "response": []
+    }
+  ]
+}
+
+

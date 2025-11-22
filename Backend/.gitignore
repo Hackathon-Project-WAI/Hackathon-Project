@@ -3,7 +3,7 @@
 
 # Firebase Service Account Key
 serviceAccountKey.json
-*.json
+
 
 # Node modules
 node_modules/

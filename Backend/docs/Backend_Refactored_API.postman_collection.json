@@ -1,0 +1,327 @@
+{
+  "info": {
+    "name": "Backend Refactored API - v2.0",
+    "description": "Complete API collection for testing Backend after refactor",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": [""]
+        },
+        "description": "Check if server is running and get list of available endpoints"
+      }
+    },
+    {
+      "name": "Email Tests",
+      "item": [
+        {
+          "name": "Send Test Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"your-email@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/send-test-email",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "send-test-email"]
+            },
+            "description": "Send a test email to verify email service is working"
+          }
+        },
+        {
+          "name": "Send Custom Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"recipient@example.com\",\n  \"subject\": \"Test Subject\",\n  \"html\": \"<h1>Hello!</h1><p>This is a test email.</p>\",\n  \"text\": \"Hello! This is a test email.\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/send-email",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "send-email"]
+            },
+            "description": "Send a custom email with your own subject and content"
+          }
+        },
+        {
+          "name": "Send Flood Alert Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"recipient@example.com\",\n  \"alertData\": {\n    \"district\": \"Hải Châu\",\n    \"level\": \"Cao\",\n    \"rainfall\": \"150\",\n    \"time\": \"2025-11-20 10:30\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/send-flood-alert",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "send-flood-alert"]
+            },
+            "description": "Send flood alert email with pre-defined template"
+          }
+        },
+        {
+          "name": "Send Weather Update Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"recipient@example.com\",\n  \"weatherData\": {\n    \"location\": \"Đà Nẵng\",\n    \"temperature\": \"28\",\n    \"humidity\": \"75\",\n    \"rainChance\": \"60\",\n    \"windSpeed\": \"15\",\n    \"description\": \"Có mưa rào và dông\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/send-weather-update",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "send-weather-update"]
+            },
+            "description": "Send weather update email"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Alert Generation",
+      "item": [
+        {
+          "name": "Generate AI Flood Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_percent\": 85,\n  \"previous_percent\": 50,\n  \"location\": \"Cống Phan Đình Phùng\",\n  \"timestamp\": \"2025-11-20T10:30:00\",\n  \"to\": \"your-email@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/generate-flood-alert",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "generate-flood-alert"]
+            },
+            "description": "Generate flood alert using Gemini AI and optionally send email"
+          }
+        },
+        {
+          "name": "Generate AI Alert (No Email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_percent\": 75,\n  \"previous_percent\": 60,\n  \"location\": \"Đường 2/9\",\n  \"timestamp\": \"2025-11-20T11:00:00\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/generate-flood-alert",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "generate-flood-alert"]
+            },
+            "description": "Generate AI alert without sending email (just get the generated content)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Firebase Integration",
+      "item": [
+        {
+          "name": "Get All Sensors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3001/api/firebase/sensors",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "firebase", "sensors"]
+            },
+            "description": "Get all flood sensors from Firebase"
+          }
+        },
+        {
+          "name": "Get Sensor By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3001/api/firebase/sensors/sensor1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "firebase", "sensors", "sensor1"]
+            },
+            "description": "Get specific sensor data by ID"
+          }
+        },
+        {
+          "name": "Write Data to Firebase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"test/data\",\n  \"data\": {\n    \"message\": \"Hello Firebase\",\n    \"timestamp\": \"2025-11-20T12:00:00\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/firebase/write",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "firebase", "write"]
+            },
+            "description": "Write data to Firebase Realtime Database"
+          }
+        },
+        {
+          "name": "Check Firebase and Send Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sensorId\": \"sensor1\",\n  \"to\": \"your-email@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/check-firebase-and-alert",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "check-firebase-and-alert"]
+            },
+            "description": "Read sensor data from Firebase and send alert if threshold exceeded"
+          }
+        }
+      ]
+    },
+    {
+      "name": "IoT Data",
+      "item": [
+        {
+          "name": "Check IoT Sensor Data (SENSOR_ROAD)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sensorId\": \"SENSOR_ROAD\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/check-iot-data",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "check-iot-data"]
+            },
+            "description": "Check IoT sensor data from iotData/SENSOR_ROAD"
+          }
+        },
+        {
+          "name": "Check IoT Sensor Data (SENSOR_SEWER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sensorId\": \"SENSOR_SEWER\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/check-iot-data",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["api", "check-iot-data"]
+            },
+            "description": "Check IoT sensor data from iotData/SENSOR_SEWER"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "yourEmail",
+      "value": "your-email@gmail.com",
+      "type": "string",
+      "description": "Replace with your actual email for testing"
+    }
+  ]
+}
