@@ -2,18 +2,18 @@
  * AI Alert Demo Component
  * Component để demo tính năng AI-generated flood alerts
  */
-import React, { useState } from "react";
-import { useAIAlert } from "../hooks/useAIAlert";
-import "./AIAlertDemo.css";
+import React, { useState } from 'react';
+import { useAIAlert } from '../hooks/useAIAlert';
+import './AIAlertDemo.css';
 
 const AIAlertDemo = () => {
   const { loading, error, alert, generateAlert, reset } = useAIAlert();
-
+  
   const [formData, setFormData] = useState({
     current_percent: 85,
     previous_percent: 50,
-    location: "Cống Phan Đình Phùng",
-    to: "", // Optional email
+    location: 'Cống Phan Đình Phùng',
+    to: '', // Optional email
   });
 
   const handleInputChange = (e) => {
@@ -26,7 +26,7 @@ const AIAlertDemo = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     const alertData = {
       current_percent: parseFloat(formData.current_percent),
       previous_percent: parseFloat(formData.previous_percent),
@@ -41,7 +41,7 @@ const AIAlertDemo = () => {
     try {
       await generateAlert(alertData);
     } catch (err) {
-      console.error("Failed to generate alert:", err);
+      console.error('Failed to generate alert:', err);
     }
   };
 
@@ -50,8 +50,8 @@ const AIAlertDemo = () => {
     setFormData({
       current_percent: 85,
       previous_percent: 50,
-      location: "Cống Phan Đình Phùng",
-      to: "",
+      location: 'Cống Phan Đình Phùng',
+      to: '',
     });
   };
 
@@ -113,7 +113,7 @@ const AIAlertDemo = () => {
 
         <div className="form-actions">
           <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? "⏳ Đang tạo..." : "🚀 Tạo Cảnh Báo"}
+            {loading ? '⏳ Đang tạo...' : '🚀 Tạo Cảnh Báo'}
           </button>
           <button type="button" onClick={handleReset} className="btn-secondary">
             Reset
@@ -130,7 +130,7 @@ const AIAlertDemo = () => {
       {alert && (
         <div className="alert-result">
           <h3>✅ Cảnh báo đã được tạo thành công!</h3>
-
+          
           <div className="alert-subject">
             <strong>Tiêu đề:</strong>
             <p>{alert.subject}</p>
@@ -147,3 +147,4 @@ const AIAlertDemo = () => {
 };
 
 export default AIAlertDemo;
+

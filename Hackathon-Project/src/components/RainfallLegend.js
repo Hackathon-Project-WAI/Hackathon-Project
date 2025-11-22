@@ -47,9 +47,9 @@ const RainfallLegend = () => {
           <div key={index} className="legend-item">
             <div
               className="legend-color-box"
-              style={{
+              style={{ 
                 backgroundColor: item.color,
-                border: index === 0 ? "1px dashed #999" : "none", // Viền nét đứt cho "Không mưa"
+                border: index === 0 ? '1px dashed #999' : 'none' // Viền nét đứt cho "Không mưa"
               }}
             />
             <div className="legend-label">
@@ -59,15 +59,8 @@ const RainfallLegend = () => {
                 ({item.range})
               </span>
               {item.note && (
-                <span
-                  style={{
-                    color: "#666",
-                    fontSize: "10px",
-                    fontStyle: "italic",
-                  }}
-                >
-                  {" "}
-                  {item.note}
+                <span style={{ color: "#666", fontSize: "10px", fontStyle: "italic" }}>
+                  {" "}{item.note}
                 </span>
               )}
             </div>

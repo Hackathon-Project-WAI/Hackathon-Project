@@ -2,17 +2,15 @@
  * Personalized Alert Demo Component
  * Component để demo tính năng cảnh báo cá nhân hóa
  */
-import React, { useState, useEffect } from "react";
-import { usePersonalizedAlert } from "../hooks/usePersonalizedAlert";
-import "./PersonalizedAlertDemo.css";
+import React, { useState, useEffect } from 'react';
+import { usePersonalizedAlert } from '../hooks/usePersonalizedAlert';
+import './PersonalizedAlertDemo.css';
 
 const PersonalizedAlertDemo = ({ currentUserId = null }) => {
-  const [userId, setUserId] = useState(
-    currentUserId || "MgqmfPnodPRCjEhqyfycYavN2cK2"
-  );
+  const [userId, setUserId] = useState(currentUserId || 'MgqmfPnodPRCjEhqyfycYavN2cK2');
   const [minRiskLevel, setMinRiskLevel] = useState(1);
   const [sendEmail, setSendEmail] = useState(false); // Default false for demo
-
+  
   const {
     loading,
     error,
@@ -35,38 +33,38 @@ const PersonalizedAlertDemo = ({ currentUserId = null }) => {
     try {
       await checkLocationsAndAlert(minRiskLevel, sendEmail);
     } catch (err) {
-      console.error("Failed to check alerts:", err);
+      console.error('Failed to check alerts:', err);
     }
   };
 
   const getRiskLevelColor = (level) => {
     const colors = {
-      0: "#4caf50",
-      1: "#ffc107",
-      2: "#ff9800",
-      3: "#f44336",
+      0: '#4caf50',
+      1: '#ffc107',
+      2: '#ff9800',
+      3: '#f44336',
     };
-    return colors[level] || "#9e9e9e";
+    return colors[level] || '#9e9e9e';
   };
 
   const getRiskLevelText = (level) => {
     const texts = {
-      0: "An toàn",
-      1: "Cảnh báo",
-      2: "Nguy hiểm",
-      3: "Nghiêm trọng",
+      0: 'An toàn',
+      1: 'Cảnh báo',
+      2: 'Nguy hiểm',
+      3: 'Nghiêm trọng',
     };
-    return texts[level] || "Không xác định";
+    return texts[level] || 'Không xác định';
   };
 
   const getStatusColor = (status) => {
     const colors = {
-      safe: "#4caf50",
-      warning: "#ffc107",
-      danger: "#ff9800",
-      critical: "#f44336",
+      safe: '#4caf50',
+      warning: '#ffc107',
+      danger: '#ff9800',
+      critical: '#f44336',
     };
-    return colors[status] || "#9e9e9e";
+    return colors[status] || '#9e9e9e';
   };
 
   return (
@@ -117,7 +115,7 @@ const PersonalizedAlertDemo = ({ currentUserId = null }) => {
           disabled={loading || !userId}
           className="btn-check-alerts"
         >
-          {loading ? "⏳ Đang kiểm tra..." : "🔍 Kiểm tra Cảnh Báo"}
+          {loading ? '⏳ Đang kiểm tra...' : '🔍 Kiểm tra Cảnh Báo'}
         </button>
       </div>
 
@@ -157,9 +155,7 @@ const PersonalizedAlertDemo = ({ currentUserId = null }) => {
             {locations.map((location) => (
               <div
                 key={location.id}
-                className={`location-card ${
-                  !location.is_active ? "inactive" : ""
-                }`}
+                className={`location-card ${!location.is_active ? 'inactive' : ''}`}
               >
                 <div className="location-header">
                   <h4>{location.name}</h4>
@@ -167,9 +163,7 @@ const PersonalizedAlertDemo = ({ currentUserId = null }) => {
                     <span
                       className="status-badge"
                       style={{
-                        backgroundColor: getStatusColor(
-                          location.last_alert_status
-                        ),
+                        backgroundColor: getStatusColor(location.last_alert_status),
                       }}
                     >
                       {location.last_alert_status}
@@ -179,16 +173,12 @@ const PersonalizedAlertDemo = ({ currentUserId = null }) => {
                 <p className="location-address">{location.address}</p>
                 <div className="location-details">
                   {location.latitude && location.longitude && (
-                    <span>
-                      🌍 {location.latitude.toFixed(4)},{" "}
-                      {location.longitude.toFixed(4)}
-                    </span>
+                    <span>🌍 {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}</span>
                   )}
                   <span>📡 Bán kính: {location.alert_radius || 0} km</span>
                   {location.last_checked && (
                     <span>
-                      🕒 Kiểm tra:{" "}
-                      {new Date(location.last_checked).toLocaleString("vi-VN")}
+                      🕒 Kiểm tra: {new Date(location.last_checked).toLocaleString('vi-VN')}
                     </span>
                   )}
                 </div>
@@ -219,8 +209,7 @@ const PersonalizedAlertDemo = ({ currentUserId = null }) => {
 
                 {alert.distance !== undefined && (
                   <p className="alert-distance">
-                    📍 Khoảng cách đến khu vực ngập: {alert.distance.toFixed(2)}{" "}
-                    km
+                    📍 Khoảng cách đến khu vực ngập: {alert.distance.toFixed(2)} km
                   </p>
                 )}
 
@@ -261,3 +250,4 @@ const PersonalizedAlertDemo = ({ currentUserId = null }) => {
 };
 
 export default PersonalizedAlertDemo;
+

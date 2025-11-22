@@ -159,9 +159,7 @@ const WeatherDropdown = () => {
             <div className="dropdown-item-value">
               {Math.round(weather.current.temp)}°C
             </div>
-            <div className="dropdown-item-label">
-              {weather.current.description}
-            </div>
+            <div className="dropdown-item-label">{weather.current.description}</div>
           </div>
         </div>
 
@@ -169,15 +167,10 @@ const WeatherDropdown = () => {
         <div className="weather-dropdown-item rainfall">
           <div className="dropdown-item-icon">🌧️</div>
           <div className="dropdown-item-info">
-            <div
-              className="dropdown-item-value"
-              style={{ color: rainLevel.color }}
-            >
+            <div className="dropdown-item-value" style={{ color: rainLevel.color }}>
               {rainfall3h.toFixed(1)} mm
             </div>
-            <div className="dropdown-item-label">
-              {rainLevel.label} (3h tới)
-            </div>
+            <div className="dropdown-item-label">{rainLevel.label} (3h tới)</div>
           </div>
         </div>
 
@@ -185,10 +178,7 @@ const WeatherDropdown = () => {
         <div className="weather-dropdown-item flood">
           <div className="dropdown-item-icon">{floodRisk.icon}</div>
           <div className="dropdown-item-info">
-            <div
-              className="dropdown-item-value"
-              style={{ color: floodRisk.color }}
-            >
+            <div className="dropdown-item-value" style={{ color: floodRisk.color }}>
               {floodRisk.label}
             </div>
             <div className="dropdown-item-label">Tình trạng ngập</div>
@@ -200,3 +190,4 @@ const WeatherDropdown = () => {
 };
 
 export default WeatherDropdown;
+

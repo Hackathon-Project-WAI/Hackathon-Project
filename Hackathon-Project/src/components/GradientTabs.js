@@ -53,3 +53,8 @@ const GradientTabs = ({ tabs, className, onChange, activeTabId }) => {
 };
 
 export default GradientTabs;
+
+
+
+
+

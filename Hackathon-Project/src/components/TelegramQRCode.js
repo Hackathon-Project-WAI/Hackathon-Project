@@ -3,13 +3,13 @@
  * Hiển thị QR code để người dùng quét và truy cập Telegram Bot
  */
 
-import React, { useState, useEffect } from "react";
-import { QRCodeSVG } from "qrcode.react";
-import { getTelegramQRInfo, getBotInfo } from "../api/telegramApi";
-import "./TelegramQRCode.css";
+import React, { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import { getTelegramQRInfo, getBotInfo } from '../api/telegramApi';
+import './TelegramQRCode.css';
 
 const TelegramQRCode = ({ showModal = false, onClose }) => {
-  const [qrData, setQrData] = useState("");
+  const [qrData, setQrData] = useState('');
   const [botInfo, setBotInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,38 +25,38 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
     try {
       setLoading(true);
       setError(null);
-
+      
       // Lấy userId từ Firebase Auth (imported from configs)
-      const { auth } = await import("../configs/firebase");
+      const { auth } = await import('../configs/firebase');
       const currentUser = auth.currentUser;
       const userId = currentUser?.uid;
-
-      console.log("🔐 Current user ID for QR:", userId);
-
+      
+      console.log('🔐 Current user ID for QR:', userId);
+      
       // Lấy thông tin QR với userId để auto-link
       const qrResponse = await getTelegramQRInfo(userId);
       if (qrResponse.success) {
         setQrData(qrResponse.data.qrData);
-        console.log("✅ QR data loaded:", qrResponse.data.qrData);
+        console.log('✅ QR data loaded:', qrResponse.data.qrData);
       }
-
+      
       // Lấy thông tin chi tiết bot
       const infoResponse = await getBotInfo();
       if (infoResponse.success) {
         setBotInfo(infoResponse.data);
       }
-
+      
       setLoading(false);
     } catch (err) {
-      console.error("Error loading bot info:", err);
-      setError("Không thể tải thông tin bot. Vui lòng thử lại.");
+      console.error('Error loading bot info:', err);
+      setError('Không thể tải thông tin bot. Vui lòng thử lại.');
       setLoading(false);
     }
   };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert("Đã sao chép link!");
+    alert('Đã sao chép link!');
   };
 
   if (!showModal) {
@@ -65,20 +65,13 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
 
   return (
     <div className="telegram-qr-overlay" onClick={onClose}>
-      <div
-        className="telegram-qr-container"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="telegram-qr-close" onClick={onClose}>
-          ×
-        </button>
-
+      <div className="telegram-qr-container" onClick={(e) => e.stopPropagation()}>
+        <button className="telegram-qr-close" onClick={onClose}>×</button>
+        
         <div className="telegram-qr-header">
           <div className="telegram-qr-icon">📱</div>
           <h2>Quét mã để chat với Bot</h2>
-          <p className="telegram-qr-subtitle">
-            Nhận cảnh báo ngập lụt trực tiếp trên Telegram
-          </p>
+          <p className="telegram-qr-subtitle">Nhận cảnh báo ngập lụt trực tiếp trên Telegram</p>
         </div>
 
         {loading ? (
@@ -89,9 +82,7 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
         ) : error ? (
           <div className="telegram-qr-error">
             <p>❌ {error}</p>
-            <button onClick={loadBotInfo} className="retry-button">
-              Thử lại
-            </button>
+            <button onClick={loadBotInfo} className="retry-button">Thử lại</button>
           </div>
         ) : (
           <div className="telegram-qr-content">
@@ -132,15 +123,15 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
             <div className="telegram-direct-link">
               <p className="link-label">Hoặc truy cập trực tiếp:</p>
               <div className="link-container">
-                <a
-                  href={qrData}
-                  target="_blank"
+                <a 
+                  href={qrData} 
+                  target="_blank" 
                   rel="noopener noreferrer"
                   className="bot-link"
                 >
                   t.me/{botInfo?.username}
                 </a>
-                <button
+                <button 
                   onClick={() => copyToClipboard(qrData)}
                   className="copy-button"
                   title="Sao chép link"
@@ -152,13 +143,13 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
 
             {/* Bot Info Toggle */}
             <div className="bot-info-section">
-              <button
+              <button 
                 className="show-detail-button"
                 onClick={() => setShowDetail(!showDetail)}
               >
-                {showDetail ? "▼" : "▶"} Thông tin chi tiết
+                {showDetail ? '▼' : '▶'} Thông tin chi tiết
               </button>
-
+              
               {showDetail && botInfo && (
                 <div className="bot-detail-info">
                   <div className="info-row">
@@ -175,9 +166,7 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
                   </div>
                   <div className="info-row">
                     <span className="info-label">Người dùng đã đăng ký:</span>
-                    <span className="info-value highlight">
-                      {botInfo.registeredUsers} người
-                    </span>
+                    <span className="info-value highlight">{botInfo.registeredUsers} người</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">Email:</span>
@@ -185,15 +174,11 @@ const TelegramQRCode = ({ showModal = false, onClose }) => {
                   </div>
                   <div className="info-row">
                     <span className="info-label">User ID:</span>
-                    <span className="info-value">
-                      Dz1IjDVXNRcp3q1wNBNDnoHGZBj1
-                    </span>
+                    <span className="info-value">Dz1IjDVXNRcp3q1wNBNDnoHGZBj1</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">QR Link:</span>
-                    <span className="info-value link-text">
-                      {botInfo.deepLink}
-                    </span>
+                    <span className="info-value link-text">{botInfo.deepLink}</span>
                   </div>
                 </div>
               )}

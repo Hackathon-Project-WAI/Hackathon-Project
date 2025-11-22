@@ -2,16 +2,16 @@
  * Firebase Sensors Monitor Component
  * Real-time monitoring của IoT sensors từ Firebase
  */
-import React, { useState } from "react";
-import { useFirebaseSensors } from "../hooks/useFirebaseSensors";
-import { useAIAlert } from "../hooks/useAIAlert";
-import "./FirebaseSensorsMonitor.css";
+import React, { useState } from 'react';
+import { useFirebaseSensors } from '../hooks/useFirebaseSensors';
+import { useAIAlert } from '../hooks/useAIAlert';
+import './FirebaseSensorsMonitor.css';
 
 const FirebaseSensorsMonitor = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(5000);
-  const [userEmail, setUserEmail] = useState("");
-
+  const [userEmail, setUserEmail] = useState('');
+  
   const {
     sensors,
     loading,
@@ -25,20 +25,20 @@ const FirebaseSensorsMonitor = () => {
 
   const getFloodStatusColor = (status) => {
     const colors = {
-      SAFE: "#4caf50",
-      WARNING: "#ffc107",
-      DANGER: "#f44336",
-      CRITICAL: "#b71c1c",
+      SAFE: '#4caf50',
+      WARNING: '#ffc107',
+      DANGER: '#f44336',
+      CRITICAL: '#b71c1c',
     };
-    return colors[status] || "#9e9e9e";
+    return colors[status] || '#9e9e9e';
   };
 
   const getFloodStatusText = (status) => {
     const texts = {
-      SAFE: "An toàn",
-      WARNING: "Cảnh báo",
-      DANGER: "Nguy hiểm",
-      CRITICAL: "Nghiêm trọng",
+      SAFE: 'An toàn',
+      WARNING: 'Cảnh báo',
+      DANGER: 'Nguy hiểm',
+      CRITICAL: 'Nghiêm trọng',
     };
     return texts[status] || status;
   };
@@ -56,7 +56,7 @@ const FirebaseSensorsMonitor = () => {
         },
         userEmail || null
       );
-
+      
       alert(`✅ Cảnh báo đã được tạo!\n\nTiêu đề: ${result.alert.subject}`);
     } catch (err) {
       alert(`❌ Lỗi: ${err.message}`);
@@ -81,7 +81,7 @@ const FirebaseSensorsMonitor = () => {
             />
             Tự động refresh
           </label>
-
+          
           {autoRefresh && (
             <select
               value={refreshInterval}
@@ -110,14 +110,14 @@ const FirebaseSensorsMonitor = () => {
           disabled={loading}
           className="btn-refresh"
         >
-          {loading ? "⏳" : "🔄"} Refresh
+          {loading ? '⏳' : '🔄'} Refresh
         </button>
       </div>
 
       {/* Last Update */}
       {lastUpdate && (
         <div className="last-update">
-          🕒 Cập nhật lần cuối: {lastUpdate.toLocaleString("vi-VN")}
+          🕒 Cập nhật lần cuối: {lastUpdate.toLocaleString('vi-VN')}
         </div>
       )}
 
@@ -132,8 +132,7 @@ const FirebaseSensorsMonitor = () => {
       {/* Dangerous Sensors Alert */}
       {dangerousSensors.length > 0 && (
         <div className="danger-alert">
-          <strong>⚠️ CẢNH BÁO:</strong> {dangerousSensors.length} cảm biến ở
-          trạng thái NGUY HIỂM!
+          <strong>⚠️ CẢNH BÁO:</strong> {dangerousSensors.length} cảm biến ở trạng thái NGUY HIỂM!
         </div>
       )}
 
@@ -144,13 +143,11 @@ const FirebaseSensorsMonitor = () => {
           {sensors.SENSOR_ROAD && (
             <div className="sensor-card">
               <div className="sensor-header">
-                <h3>🚗 {sensors.SENSOR_ROAD.device_id || "SENSOR_ROAD"}</h3>
+                <h3>🚗 {sensors.SENSOR_ROAD.device_id || 'SENSOR_ROAD'}</h3>
                 <span
                   className="status-badge"
                   style={{
-                    backgroundColor: getFloodStatusColor(
-                      sensors.SENSOR_ROAD.flood_status
-                    ),
+                    backgroundColor: getFloodStatusColor(sensors.SENSOR_ROAD.flood_status),
                   }}
                 >
                   {getFloodStatusText(sensors.SENSOR_ROAD.flood_status)}
@@ -166,24 +163,18 @@ const FirebaseSensorsMonitor = () => {
                 </div>
 
                 <div className="sensor-location">
-                  📍 Vị trí: {sensors.SENSOR_ROAD.latitude?.toFixed(4)},{" "}
-                  {sensors.SENSOR_ROAD.longitude?.toFixed(4)}
+                  📍 Vị trí: {sensors.SENSOR_ROAD.latitude?.toFixed(4)}, {sensors.SENSOR_ROAD.longitude?.toFixed(4)}
                 </div>
 
                 {sensors.SENSOR_ROAD.timestamp && (
                   <div className="sensor-time">
-                    🕒{" "}
-                    {new Date(
-                      sensors.SENSOR_ROAD.timestamp * 1000
-                    ).toLocaleString("vi-VN")}
+                    🕒 {new Date(sensors.SENSOR_ROAD.timestamp * 1000).toLocaleString('vi-VN')}
                   </div>
                 )}
               </div>
 
               <button
-                onClick={() =>
-                  handleGenerateAlert(sensors.SENSOR_ROAD, "SENSOR_ROAD")
-                }
+                onClick={() => handleGenerateAlert(sensors.SENSOR_ROAD, 'SENSOR_ROAD')}
                 className="btn-generate-alert"
               >
                 🤖 Tạo AI Alert
@@ -195,13 +186,11 @@ const FirebaseSensorsMonitor = () => {
           {sensors.SENSOR_SEWER && (
             <div className="sensor-card">
               <div className="sensor-header">
-                <h3>🚰 {sensors.SENSOR_SEWER.device_id || "SENSOR_SEWER"}</h3>
+                <h3>🚰 {sensors.SENSOR_SEWER.device_id || 'SENSOR_SEWER'}</h3>
                 <span
                   className="status-badge"
                   style={{
-                    backgroundColor: getFloodStatusColor(
-                      sensors.SENSOR_SEWER.flood_status
-                    ),
+                    backgroundColor: getFloodStatusColor(sensors.SENSOR_SEWER.flood_status),
                   }}
                 >
                   {getFloodStatusText(sensors.SENSOR_SEWER.flood_status)}
@@ -217,24 +206,18 @@ const FirebaseSensorsMonitor = () => {
                 </div>
 
                 <div className="sensor-location">
-                  📍 Vị trí: {sensors.SENSOR_SEWER.latitude?.toFixed(4)},{" "}
-                  {sensors.SENSOR_SEWER.longitude?.toFixed(4)}
+                  📍 Vị trí: {sensors.SENSOR_SEWER.latitude?.toFixed(4)}, {sensors.SENSOR_SEWER.longitude?.toFixed(4)}
                 </div>
 
                 {sensors.SENSOR_SEWER.timestamp && (
                   <div className="sensor-time">
-                    🕒{" "}
-                    {new Date(
-                      sensors.SENSOR_SEWER.timestamp * 1000
-                    ).toLocaleString("vi-VN")}
+                    🕒 {new Date(sensors.SENSOR_SEWER.timestamp * 1000).toLocaleString('vi-VN')}
                   </div>
                 )}
               </div>
 
               <button
-                onClick={() =>
-                  handleGenerateAlert(sensors.SENSOR_SEWER, "SENSOR_SEWER")
-                }
+                onClick={() => handleGenerateAlert(sensors.SENSOR_SEWER, 'SENSOR_SEWER')}
                 className="btn-generate-alert"
               >
                 🤖 Tạo AI Alert
@@ -251,14 +234,12 @@ const FirebaseSensorsMonitor = () => {
 
               <div className="sensor-body">
                 <div className="status-list">
-                  {Object.entries(sensors.water_level_status).map(
-                    ([key, value]) => (
-                      <div key={key} className="status-item">
-                        <span className="status-key">{key}:</span>
-                        <span className="status-value">{String(value)}</span>
-                      </div>
-                    )
-                  )}
+                  {Object.entries(sensors.water_level_status).map(([key, value]) => (
+                    <div key={key} className="status-item">
+                      <span className="status-key">{key}:</span>
+                      <span className="status-value">{String(value)}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -278,3 +259,4 @@ const FirebaseSensorsMonitor = () => {
 };
 
 export default FirebaseSensorsMonitor;
+

@@ -32,8 +32,7 @@
   border-radius: 1.5rem;
   overflow: hidden;
   background: white;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
 .layers-header {
@@ -66,7 +65,7 @@
 .layers-list-container {
   max-height: 300px;
   opacity: 1;
-  overflow-y: auto;
+  overflow-y: auto; 
   overflow-x: hidden;
   transition: all 0.3s ease-in-out;
   pointer-events: auto;
@@ -114,11 +113,7 @@
 .layer-item.feature {
   margin-top: 0.25rem;
   border: 1px solid rgba(99, 102, 241, 0.2);
-  background: linear-gradient(
-    to right,
-    rgba(99, 102, 241, 0.05),
-    rgba(168, 85, 247, 0.05)
-  );
+  background: linear-gradient(to right, rgba(99, 102, 241, 0.05), rgba(168, 85, 247, 0.05));
   padding: 1rem;
   border-radius: 1rem;
 }

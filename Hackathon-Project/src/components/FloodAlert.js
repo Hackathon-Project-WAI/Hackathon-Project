@@ -83,20 +83,15 @@ function FloodAlert() {
     try {
       const alertData = {
         district: alertItem.area.name,
-        level:
-          alertItem.prediction.floodRisk === 3
-            ? "Rất cao"
-            : alertItem.prediction.floodRisk === 2
-            ? "Cao"
-            : alertItem.prediction.floodRisk === 1
-            ? "Trung bình"
-            : "Thấp",
+        level: alertItem.prediction.floodRisk === 3 ? "Rất cao" : 
+               alertItem.prediction.floodRisk === 2 ? "Cao" : 
+               alertItem.prediction.floodRisk === 1 ? "Trung bình" : "Thấp",
         rainfall: `${alertItem.prediction.details.rainfall3h}`,
-        time: new Date().toLocaleString("vi-VN"),
+        time: new Date().toLocaleString('vi-VN')
       };
 
       const result = await sendFloodAlert(userEmail, alertData);
-
+      
       if (result.success) {
         setEmailStatus("success");
         setTimeout(() => {
@@ -173,9 +168,7 @@ function FloodAlert() {
               <span className="email-status success">✅ Đã gửi!</span>
             )}
             {emailStatus === "error" && (
-              <span className="email-status error">
-                ❌ Lỗi! Vui lòng kiểm tra email
-              </span>
+              <span className="email-status error">❌ Lỗi! Vui lòng kiểm tra email</span>
             )}
           </div>
           <small className="email-note">
@@ -263,9 +256,7 @@ function FloodAlert() {
                     onClick={() => handleSendEmailAlert(item)}
                     disabled={sendingEmail}
                   >
-                    {sendingEmail
-                      ? "⏳ Đang gửi..."
-                      : "📧 Gửi cảnh báo qua email"}
+                    {sendingEmail ? "⏳ Đang gửi..." : "📧 Gửi cảnh báo qua email"}
                   </button>
                 )}
               </div>

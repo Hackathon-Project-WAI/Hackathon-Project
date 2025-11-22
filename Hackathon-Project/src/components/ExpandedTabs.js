@@ -132,10 +132,7 @@ function ExpandedTabs({ tabs, className, onChange, selectedIndex = 0 }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
         // Don't deselect on outside click for navigation
         // setSelected(null);
         // if (onChange) onChange(null);
@@ -155,10 +152,7 @@ function ExpandedTabs({ tabs, className, onChange, selectedIndex = 0 }) {
   );
 
   return (
-    <div
-      ref={containerRef}
-      className={`expanded-tabs-container ${className || ""}`}
-    >
+    <div ref={containerRef} className={`expanded-tabs-container ${className || ""}`}>
       {tabs.map((tab, index) => {
         if (tab.type === "separator") {
           return <SeparatorComponent key={`separator-${index}`} />;
@@ -211,3 +205,8 @@ function ExpandedTabs({ tabs, className, onChange, selectedIndex = 0 }) {
 
 export default ExpandedTabs;
 export { MapIcon, WeatherIcon, UserIcon, LoginIcon, LogoutIcon };
+
+
+
+
+

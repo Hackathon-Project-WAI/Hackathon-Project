@@ -1,16 +1,7 @@
 {
-  "hosting": {
-    "public": "build",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
+  "projects": {
+    "default": "fir-hackathon-98bf5"
+  },
+  "targets": {},
+  "etags": {}
 }
