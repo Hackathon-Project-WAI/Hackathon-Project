@@ -260,57 +260,6 @@ const RouteSearchPanel = ({
                 <X size={14} />
               </button>
             )}
-
-            {/* Start Input Dropdown */}
-            {(() => {
-              const shouldRender =
-                suggestions.length > 0 && activeInput === "start";
-              console.log("🟢 Start dropdown:", {
-                shouldRender,
-                suggestionsCount: suggestions.length,
-                activeInput,
-              });
-              return (
-                shouldRender && (
-                  <div className="suggestions-dropdown" ref={suggestionsRef}>
-                    {userLocation && (
-                      <div
-                        className="suggestion-item current-location"
-                        onClick={handleUseCurrentLocation}
-                      >
-                        <div className="suggestion-icon">📍</div>
-                        <div className="suggestion-content">
-                          <div className="suggestion-title">Vị trí của bạn</div>
-                          <div className="suggestion-address">
-                            Sử dụng vị trí hiện tại
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {suggestions.map((suggestion, index) => (
-                      <div
-                        key={suggestion.id || index}
-                        className="suggestion-item"
-                        onClick={() => handleSelectSuggestion(suggestion)}
-                      >
-                        <div className="suggestion-icon">📍</div>
-                        <div className="suggestion-content">
-                          <div className="suggestion-title">
-                            {suggestion.title}
-                          </div>
-                          {suggestion.address && (
-                            <div className="suggestion-address">
-                              {suggestion.address}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              );
-            })()}
           </div>
 
           {/* End Input */}
@@ -353,44 +302,56 @@ const RouteSearchPanel = ({
                 <X size={14} />
               </button>
             )}
-
-            {/* End Input Dropdown */}
-            {(() => {
-              const shouldRender =
-                suggestions.length > 0 && activeInput === "end";
-              console.log("🔴 End dropdown:", {
-                shouldRender,
-                suggestionsCount: suggestions.length,
-                activeInput,
-              });
-              return (
-                shouldRender && (
-                  <div className="suggestions-dropdown">
-                    {suggestions.map((suggestion, index) => (
-                      <div
-                        key={suggestion.id || index}
-                        className="suggestion-item"
-                        onClick={() => handleSelectSuggestion(suggestion)}
-                      >
-                        <div className="suggestion-icon">📍</div>
-                        <div className="suggestion-content">
-                          <div className="suggestion-title">
-                            {suggestion.title}
-                          </div>
-                          {suggestion.address && (
-                            <div className="suggestion-address">
-                              {suggestion.address}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              );
-            })()}
           </div>
         </div>
+
+        {/* Dropdown outside route-inputs for proper stacking */}
+        {suggestions.length > 0 && activeInput && (
+          <div
+            className="suggestions-dropdown"
+            ref={suggestionsRef}
+            style={{
+              position: "absolute",
+              top: activeInput === "start" ? "190px" : "275px",
+              left: "20px",
+              right: "20px",
+              zIndex: 10001,
+            }}
+          >
+            {activeInput === "start" && userLocation && (
+              <div
+                className="suggestion-item current-location"
+                onClick={handleUseCurrentLocation}
+              >
+                <div className="suggestion-icon">📍</div>
+                <div className="suggestion-content">
+                  <div className="suggestion-title">Vị trí của bạn</div>
+                  <div className="suggestion-address">
+                    Sử dụng vị trí hiện tại
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {suggestions.map((suggestion, index) => (
+              <div
+                key={suggestion.id || index}
+                className="suggestion-item"
+                onClick={() => handleSelectSuggestion(suggestion)}
+              >
+                <div className="suggestion-icon">📍</div>
+                <div className="suggestion-content">
+                  <div className="suggestion-title">{suggestion.title}</div>
+                  {suggestion.address && (
+                    <div className="suggestion-address">
+                      {suggestion.address}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ✅ Error Message */}
         {error && showError && (

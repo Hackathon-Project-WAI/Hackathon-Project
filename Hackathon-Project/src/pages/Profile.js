@@ -24,10 +24,13 @@ import {
   Coffee,
   Users,
   MoreHorizontal,
+  AlertTriangle,
 } from "lucide-react";
 import authService from "../services/authService";
 import userProfileService from "../services/userProfileService";
 import { useHereSearch } from "../hooks/useHereSearch";
+import { getFloodZonesAtPoint } from "../utils/floodCalculations";
+import floodData from "../data/floodProneAreas.json";
 import "./Profile.css";
 
 const ProfilePage = () => {
@@ -55,6 +58,7 @@ const ProfilePage = () => {
   const [addressQuery, setAddressQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [floodWarning, setFloodWarning] = useState(null);
   const addressInputRef = useRef(null);
   const suggestionsRef = useRef(null);
 
@@ -144,7 +148,46 @@ const ProfilePage = () => {
     setLoadingLocations(true);
     const result = await userProfileService.getLocations(user.uid);
     if (result.success) {
-      setLocations(result.data);
+      // Kiểm tra và cập nhật status cho mỗi location
+      const updatedLocations = result.data.map((loc) => {
+        // Kiểm tra vùng ngập cho location này
+        const floodZones = getFloodZonesAtPoint(
+          loc.coords.lat,
+          loc.coords.lon,
+          floodData.floodPrones || []
+        );
+
+        console.log(`🔍 Check location "${loc.name}":`, {
+          coords: loc.coords,
+          floodZones: floodZones.length,
+          currentStatus: loc.last_alert_status,
+        });
+
+        // Tính toán status mới
+        let newStatus = null;
+        if (floodZones.length > 0) {
+          const hasHighRisk = floodZones.some((z) => z.riskLevel === "high");
+          const hasMediumRisk = floodZones.some((z) => z.riskLevel === "medium");
+
+          if (hasHighRisk) {
+            newStatus = "critical";
+          } else if (hasMediumRisk) {
+            newStatus = "danger";
+          } else {
+            newStatus = "warning";
+          }
+        }
+        // Nếu không có flood zone thì để null (sẽ hiển thị là safe)
+
+        console.log(`✅ Updated status cho "${loc.name}": ${newStatus || "safe"}`);
+
+        return {
+          ...loc,
+          last_alert_status: newStatus,
+        };
+      });
+
+      setLocations(updatedLocations);
     }
     setLoadingLocations(false);
   };
@@ -234,12 +277,49 @@ const ProfilePage = () => {
     // Dùng địa chỉ gốc từ HERE Maps
     const fullAddress = suggestion.address || suggestion.title;
 
+    console.log("🗺️ Địa chỉ đã chọn:", {
+      fullAddress,
+      lat: position.lat,
+      lng: position.lng,
+    });
+
+    // Check nếu địa điểm nằm trong vùng ngập
+    const floodZones = getFloodZonesAtPoint(
+      position.lat,
+      position.lng,
+      floodData.floodPrones || []
+    );
+
+    console.log("🔍 Kết quả check vùng ngập:", {
+      totalFloodZones: floodData.floodPrones?.length || 0,
+      foundFloodZones: floodZones.length,
+      floodZones: floodZones,
+    });
+
+    if (floodZones.length > 0) {
+      console.log("⚠️ CẢNH BÁO: Địa điểm nằm trong vùng ngập!", floodZones);
+      setFloodWarning({
+        zones: floodZones,
+        message: `Địa điểm này nằm trong ${floodZones.length} vùng ngập lụt!`,
+      });
+
+      // Hiển thị alert để user nhận biết
+      const zoneNames = floodZones.map((z) => z.name).join(", ");
+      alert(
+        `⚠️ CẢNH BÁO VÙNG NGẬP!\n\nĐịa điểm này nằm trong ${floodZones.length} vùng ngập lụt:\n${zoneNames}\n\nHãy cân nhắc kỹ trước khi lưu.`
+      );
+    } else {
+      console.log("✅ Địa điểm an toàn, không nằm trong vùng ngập");
+      setFloodWarning(null);
+    }
+
     setAddressQuery(fullAddress);
     setNewLocAddress(fullAddress);
     setSelectedLocation({
       lat: position.lat,
       lng: position.lng,
       address: fullAddress,
+      floodZones: floodZones,
     });
 
     clearSuggestions();
@@ -260,17 +340,53 @@ const ProfilePage = () => {
 
     setIsAddingLoc(true);
 
+    // Xác định status dựa trên flood zones
+    let locationStatus = "safe";
+    let alertStatus = null;
+
+    console.log(
+      "💾 Đang lưu location với floodZones:",
+      selectedLocation.floodZones
+    );
+
+    if (selectedLocation.floodZones && selectedLocation.floodZones.length > 0) {
+      // Có vùng ngập - xác định mức độ nguy hiểm cao nhất
+      const hasHighRisk = selectedLocation.floodZones.some(
+        (z) => z.riskLevel === "high"
+      );
+      const hasMediumRisk = selectedLocation.floodZones.some(
+        (z) => z.riskLevel === "medium"
+      );
+
+      if (hasHighRisk) {
+        locationStatus = "critical";
+        alertStatus = "critical";
+      } else if (hasMediumRisk) {
+        locationStatus = "danger";
+        alertStatus = "danger";
+      } else {
+        locationStatus = "warning";
+        alertStatus = "warning";
+      }
+
+      console.log(
+        `🚨 Địa điểm có ${selectedLocation.floodZones.length} vùng ngập - Status: ${locationStatus}`
+      );
+    } else {
+      console.log("✅ Lưu địa điểm an toàn - Status: safe");
+    }
+
     const newLocation = {
       name: newLocName,
       address: newLocAddress,
       type: selectedCategory,
-      status: "safe",
       coords: {
         lat: selectedLocation.lat,
         lon: selectedLocation.lng,
       },
       alertRadius: 1000,
       priority: "medium",
+      last_alert_status: alertStatus, // Thêm status cho PersonalizedAlertDemo
     };
 
     console.log("🔵 Đang lưu địa điểm:", newLocation);
@@ -346,7 +462,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center p-4 md:p-8 font-sans text-slate-700 selection:bg-indigo-100 selection:text-indigo-900 overflow-hidden bg-[#EEF2FF]">
+    <div className="min-h-screen w-full relative p-4 md:p-8 font-sans text-slate-700 selection:bg-indigo-100 selection:text-indigo-900 bg-[#EEF2FF]">
       {/* --- LIGHT BACKGROUND EFFECTS --- */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-400/30 rounded-full blur-[100px] animate-pulse"></div>
@@ -355,7 +471,7 @@ const ProfilePage = () => {
       </div>
 
       {/* --- MAIN CONTAINER --- */}
-      <div className="w-full max-w-6xl relative z-10 flex flex-col gap-6">
+      <div className="w-full max-w-6xl mx-auto relative z-10 flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
@@ -499,6 +615,11 @@ const ProfilePage = () => {
                                 locationCategories.find(
                                   (c) => c.id === loc.type
                                 ) || locationCategories[0];
+                              
+                              // Xác định status hiển thị (ưu tiên last_alert_status)
+                              const displayStatus = loc.last_alert_status || "safe";
+                              const isSafe = !displayStatus || displayStatus === "safe";
+                              
                               return (
                                 <div
                                   key={loc.id}
@@ -507,7 +628,7 @@ const ProfilePage = () => {
                                   <div className="flex items-center gap-4">
                                     <div
                                       className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-sm border border-white/50 ${
-                                        loc.status === "safe"
+                                        isSafe
                                           ? "bg-green-50 text-green-600"
                                           : "bg-orange-50 text-orange-600"
                                       }`}
@@ -522,7 +643,7 @@ const ProfilePage = () => {
                                         {loc.address}
                                       </p>
                                       <div className="mt-2">
-                                        {loc.status === "safe" ? (
+                                        {isSafe ? (
                                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-100 border border-green-200 text-green-700 text-[10px] font-bold uppercase">
                                             <ShieldCheck size={10} /> An toàn
                                           </span>
@@ -910,6 +1031,56 @@ const ProfilePage = () => {
                       </div>
                     )}
                 </div>
+
+                {/* Flood Warning Box */}
+                {floodWarning && (
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 shadow-lg animate-pulse">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 shadow-md">
+                        <AlertTriangle size={20} className="text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-base font-bold text-orange-900 mb-1">
+                          ⚠️ Cảnh báo vùng ngập lụt
+                        </h4>
+                        <p className="text-sm text-orange-800 font-semibold mb-2">
+                          {floodWarning.message}
+                        </p>
+                        <div className="space-y-1.5 mt-2">
+                          {floodWarning.zones.map((zone, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-2 text-xs bg-white/60 p-2 rounded-lg border border-orange-200"
+                            >
+                              <span className="font-bold text-orange-700">
+                                {zone.name || `Vùng ${idx + 1}`}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-white font-bold ${
+                                  zone.riskLevel === "high"
+                                    ? "bg-red-500"
+                                    : zone.riskLevel === "medium"
+                                    ? "bg-orange-500"
+                                    : "bg-yellow-500"
+                                }`}
+                              >
+                                {zone.riskLevel === "high"
+                                  ? "Nguy hiểm cao"
+                                  : zone.riskLevel === "medium"
+                                  ? "Nguy hiểm trung bình"
+                                  : "Cảnh báo"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-orange-700 mt-2 font-medium">
+                          💡 Địa điểm này có nguy cơ ngập lụt. Hãy cân nhắc thêm
+                          bán kính cảnh báo lớn hơn.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Category Grid */}
                 <div>

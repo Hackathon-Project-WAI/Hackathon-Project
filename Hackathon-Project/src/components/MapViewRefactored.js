@@ -34,9 +34,16 @@ import RainfallLegend from "./RainfallLegend";
 import FloodLegend from "./FloodLegend";
 import RouteResultsPanel from "./RouteResultsPanel";
 import LocateMeButton from "./LocateMeButton";
+import sensorService from "../services/sensorService";
 import "./MapViewRefactored.css";
 
 const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
+  console.log("🚀 MapViewRefactored mounted/updated", {
+    placesCount: places?.length,
+    floodZonesCount: floodZones?.length,
+    hasApiKey: !!apiKey
+  });
+  
   const mapRef = useRef(null);
   const markersGroup = useRef(null);
   const floodOverlayGroup = useRef(null);
@@ -48,6 +55,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   const [weatherOverlayVisible, setWeatherOverlayVisible] = useState(false);
   const [isLayersCollapsed, setIsLayersCollapsed] = useState(false);
   const [isLocatingUser, setIsLocatingUser] = useState(false); // State cho loading GPS
+  const [sensorFloodZones, setSensorFloodZones] = useState([]); // Flood zones từ sensors
 
   // ========== CUSTOM HOOKS ==========
   const {
@@ -105,13 +113,49 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
 
   // ========== FLOOD ZONES OVERLAY ==========
 
+  // Subscribe to sensor data và convert thành flood zones
+  useEffect(() => {
+    console.log("🚀 useEffect for sensors - mapReady:", mapReady);
+    
+    if (!mapReady) {
+      console.log("⏳ Map not ready yet, skipping sensor subscription");
+      return;
+    }
+
+    console.log("📡 Subscribing to sensor data...");
+
+    const unsubscribe = sensorService.subscribeSensors((sensors) => {
+      console.log(`🌊 Received ${sensors.length} sensors from Firebase`);
+      console.log("📊 Sensor details:", sensors);
+      
+      // Convert sensors thành flood zones với bán kính 100m (tăng từ 20m để dễ nhìn)
+      const zones = sensorService.sensorsToFloodZones(sensors, 100);
+      console.log(`🔵 Created ${zones.length} flood zones from sensors`);
+      console.log("🗺️ Flood zones details:", zones);
+      
+      setSensorFloodZones(zones);
+    });
+
+    return () => {
+      console.log("🔌 Unsubscribing from sensor data");
+      unsubscribe();
+    };
+  }, [mapReady]);
+
+  // Merge flood zones từ file JSON và sensors
+  const combinedFloodZones = useMemo(() => {
+    const combined = [...floodZones, ...sensorFloodZones];
+    console.log(`🗺️ Combined flood zones: ${floodZones.length} static + ${sensorFloodZones.length} sensors = ${combined.length} total`);
+    return combined;
+  }, [floodZones, sensorFloodZones]);
+
   useEffect(() => {
     if (
       !mapReady ||
       !map ||
       !window.H ||
-      !floodZones ||
-      floodZones.length === 0
+      !combinedFloodZones ||
+      combinedFloodZones.length === 0
     ) {
       return;
     }
@@ -128,19 +172,34 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
       return;
     }
 
-    console.log("🗺️ Drawing flood zones overlay:", floodZones.length);
+    console.log("🗺️ Drawing flood zones overlay:", combinedFloodZones.length);
 
     // Tạo group mới
     floodOverlayGroup.current = new window.H.map.Group();
 
-    floodZones.forEach((zone) => {
+    combinedFloodZones.forEach((zone, index) => {
       const lat = zone.coords?.lat || zone.lat;
       const lng = zone.coords?.lng || zone.lng;
       const radius = zone.radius || 500;
       const riskLevel = zone.riskLevel || "medium";
 
+      console.log(`🔵 Drawing zone ${index + 1}/${combinedFloodZones.length}:`, {
+        id: zone.id,
+        name: zone.name,
+        type: zone.type,
+        coords: { lat, lng },
+        radius: radius,
+        riskLevel: riskLevel,
+        waterLevel: zone.waterLevel
+      });
+
       const circle = createFloodZoneCircle(lat, lng, radius, riskLevel);
-      if (!circle) return;
+      if (!circle) {
+        console.error(`❌ Failed to create circle for zone ${zone.id}`);
+        return;
+      }
+
+      console.log(`✅ Circle created for ${zone.id} - type: ${zone.type || 'static'}`);
 
       // Lưu data vào circle
       circle.setData({
@@ -151,6 +210,9 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
         description: zone.description,
         rainThreshold: zone.rainThreshold,
         coords: { lat, lng },
+        type: zone.type, // 'sensor' hoặc undefined
+        waterLevel: zone.waterLevel, // Chỉ có với sensor
+        floodStatus: zone.floodStatus, // Chỉ có với sensor
       });
 
       // Click event
@@ -166,7 +228,8 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     addObject(floodOverlayGroup.current);
 
     console.log("✅ Flood zones overlay added");
-  }, [mapReady, map, floodZones, floodZonesVisible, addObject, removeObject]);
+  }, [mapReady, map, combinedFloodZones, floodZonesVisible, addObject, removeObject]);
+  // showFloodInfoBubble is defined later but stable (useCallback)
 
   // ========== PLACES MARKERS ==========
 

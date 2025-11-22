@@ -4,6 +4,8 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import { personalizedAlertApi } from '../api';
+import { getFloodZonesAtPoint } from '../utils/floodCalculations';
+import floodData from '../data/floodProneAreas.json';
 
 export const usePersonalizedAlert = (userId = null, autoFetch = false) => {
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,48 @@ export const usePersonalizedAlert = (userId = null, autoFetch = false) => {
 
     try {
       const result = await personalizedAlertApi.getUserLocations(uid);
-      setLocations(result.locations || []);
+      const rawLocations = result.locations || [];
+      
+      // Kiểm tra và cập nhật status cho mỗi location
+      const updatedLocations = rawLocations.map((loc) => {
+        // Kiểm tra vùng ngập cho location này
+        const floodZones = getFloodZonesAtPoint(
+          loc.coords.lat,
+          loc.coords.lon,
+          floodData.floodPrones || []
+        );
+
+        console.log(`🔍 [Hook] Check location "${loc.name}":`, {
+          coords: loc.coords,
+          floodZones: floodZones.length,
+          currentStatus: loc.last_alert_status,
+        });
+
+        // Tính toán status mới
+        let newStatus = null;
+        if (floodZones.length > 0) {
+          const hasHighRisk = floodZones.some((z) => z.riskLevel === "high");
+          const hasMediumRisk = floodZones.some((z) => z.riskLevel === "medium");
+
+          if (hasHighRisk) {
+            newStatus = "critical";
+          } else if (hasMediumRisk) {
+            newStatus = "danger";
+          } else {
+            newStatus = "warning";
+          }
+        }
+        // Nếu không có flood zone thì để null (sẽ hiển thị là safe)
+
+        console.log(`✅ [Hook] Updated status cho "${loc.name}": ${newStatus || "safe"}`);
+
+        return {
+          ...loc,
+          last_alert_status: newStatus,
+        };
+      });
+      
+      setLocations(updatedLocations);
       return result;
     } catch (err) {
       setError(err.response?.data?.error || err.message);

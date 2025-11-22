@@ -9,6 +9,7 @@
     sans-serif;
   min-height: 100vh;
   position: relative;
+  overflow-y: auto;
 }
 
 /* Purple Gradient Background */

@@ -1,5 +1,5 @@
 /**
- * Sensors Dashboard - Hiển thị dữ liệu 2 sensors SENSOR_ROAD và SENSOR_SEWER
+ * Sensors Dashboard - Hiển thị dữ liệu TẤT CẢ sensors từ Firebase
  */
 import React, { useState, useEffect } from 'react';
 import { 
@@ -15,51 +15,40 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { firebaseApi } from '../api';
+import sensorService from '../services/sensorService';
 
 const SensorsDashboard = () => {
   const navigate = useNavigate();
-  const [sensors, setSensors] = useState(null);
+  const [sensors, setSensors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch dữ liệu sensors
-  const fetchSensors = async () => {
-    try {
-      setLoading(true);
-      const result = await firebaseApi.getAllSensors();
-      setSensors(result.data);
-      setLastUpdate(new Date());
-      setError(null);
-    } catch (err) {
-      setError(err.message || 'Lỗi khi lấy dữ liệu sensors');
-      console.error('Error fetching sensors:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Auto refresh
+  // Subscribe to sensors realtime
   useEffect(() => {
     console.log('🔍 SensorsDashboard: Component mounted');
-    fetchSensors();
+    console.log('📡 SensorsDashboard: Subscribing to sensors...');
 
-    if (autoRefresh) {
-      console.log('🔄 SensorsDashboard: Auto-refresh enabled (mỗi 5s)');
-      const interval = setInterval(fetchSensors, 5000);
-      return () => {
-        console.log('🛑 SensorsDashboard: Stopping auto-refresh');
-        clearInterval(interval);
-      };
-    }
-  }, [autoRefresh]);
+    const unsubscribe = sensorService.subscribeSensors((sensorsData) => {
+      console.log('🌊 SensorsDashboard: Received sensors data:', sensorsData);
+      setSensors(sensorsData);
+      setLastUpdate(new Date());
+      setLoading(false);
+      setError(null);
+    });
+
+    return () => {
+      console.log('🛑 SensorsDashboard: Unsubscribing from sensors');
+      unsubscribe();
+    };
+  }, []);
 
   const handleRefresh = async () => {
+    console.log('🔄 SensorsDashboard: Manual refresh');
     setIsRefreshing(true);
-    await fetchSensors();
+    setLastUpdate(new Date());
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
@@ -112,26 +101,13 @@ const SensorsDashboard = () => {
     });
   };
 
-  // Convert sensors object to array
+  // Convert sensors array
   const getSensorArray = () => {
-    if (!sensors) return [];
-    return [
-      {
-        id: 'SENSOR_ROAD',
-        name: 'Cảm biến đường',
-        deviceId: 'SENSOR_ROAD_01',
-        ...sensors.SENSOR_ROAD
-      },
-      {
-        id: 'SENSOR_SEWER',
-        name: 'Cảm biến cống',
-        deviceId: 'SENSOR_SEWER_02',
-        ...sensors.SENSOR_SEWER
-      }
-    ];
+    if (!sensors || sensors.length === 0) return [];
+    return sensors;
   };
 
-  if (loading && !sensors) {
+  if (loading && sensors.length === 0) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-white">
         <div className="text-center">
@@ -213,70 +189,75 @@ const SensorsDashboard = () => {
 
         {/* 2. SENSOR GRID - Larger cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {sensorArray.map((sensor) => {
-              const statusInfo = getStatusInfo(sensor.flood_status);
-              const percentage = Math.min(100, Math.round((sensor.water_level_cm / 100) * 100));
-              
-              return (
-                <div key={sensor.id} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl p-8 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 group relative overflow-hidden">
-                    
-                    {/* Top Bar of Card */}
-                    <div className="flex justify-between items-start mb-8">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg text-white">
-                                <Waves size={28} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-xl">{sensor.name}</h3>
-                                <p className="text-xs text-slate-500 font-mono mt-1">{sensor.deviceId}</p>
-                            </div>
-                        </div>
-                        
-                        {/* Status Badge */}
-                        <div className={`px-4 py-2 rounded-full border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${statusInfo.color}`}>
-                            {statusInfo.status === 'danger' && <AlertTriangle size={14} />}
-                            {statusInfo.status === 'safe' && <CheckCircle2 size={14} />}
-                            {statusInfo.status === 'warning' && <AlertTriangle size={14} />}
-                            {sensor.flood_status}
-                        </div>
-                    </div>
+            {sensorArray.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <p className="text-slate-500 text-lg">Không có dữ liệu sensor</p>
+              </div>
+            ) : (
+              sensorArray.map((sensor) => {
+                const statusInfo = getStatusInfo(sensor.flood_status);
+                const percentage = Math.min(100, Math.round((sensor.water_level_cm / 100) * 100));
+                
+                return (
+                  <div key={sensor.id} className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-3xl p-8 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 group relative overflow-hidden">
+                      
+                      {/* Top Bar of Card */}
+                      <div className="flex justify-between items-start mb-8">
+                          <div className="flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg text-white">
+                                  <Waves size={28} />
+                              </div>
+                              <div>
+                                  <h3 className="font-bold text-slate-800 text-xl">{sensor.device_id || sensor.id}</h3>
+                                  <p className="text-xs text-slate-500 font-mono mt-1">ID: {sensor.id}</p>
+                              </div>
+                          </div>
+                          
+                          {/* Status Badge */}
+                          <div className={`px-4 py-2 rounded-full border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${statusInfo.color}`}>
+                              {statusInfo.status === 'danger' && <AlertTriangle size={14} />}
+                              {statusInfo.status === 'safe' && <CheckCircle2 size={14} />}
+                              {statusInfo.status === 'warning' && <AlertTriangle size={14} />}
+                              {sensor.flood_status || 'UNKNOWN'}
+                          </div>
+                      </div>
 
-                    {/* Main Metric: Water Level */}
-                    <div className="mb-8 text-center relative py-6">
-                        <div className="text-slate-400 text-sm font-bold uppercase tracking-widest mb-2">Mực nước hiện tại</div>
-                        <div className="flex justify-center items-baseline gap-2">
-                            <span className="text-6xl font-bold text-slate-800">{sensor.water_level_cm}</span>
-                            <span className="text-2xl font-medium text-slate-500">cm</span>
-                        </div>
-                        <div className="text-sm font-bold text-slate-400 mt-2">({percentage}% sức chứa)</div>
-                    </div>
+                      {/* Main Metric: Water Level */}
+                      <div className="mb-8 text-center relative py-6">
+                          <div className="text-slate-400 text-sm font-bold uppercase tracking-widest mb-2">Mực nước hiện tại</div>
+                          <div className="flex justify-center items-baseline gap-2">
+                              <span className="text-6xl font-bold text-slate-800">{sensor.water_level_cm || 0}</span>
+                              <span className="text-2xl font-medium text-slate-500">cm</span>
+                          </div>
+                          <div className="text-sm font-bold text-slate-400 mt-2">({percentage}% sức chứa)</div>
+                      </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full bg-slate-100 h-4 rounded-full mb-8 overflow-hidden border border-slate-200 shadow-inner">
-                        <div 
-                            className={`h-full rounded-full transition-all duration-1000 ease-out ${statusInfo.progressColor}`}
-                            style={{ width: `${percentage}%` }}
-                        >
-                            <div className="w-full h-full animate-[shimmer_2s_linear_infinite] bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem]"></div>
-                        </div>
-                    </div>
+                      {/* Progress Bar */}
+                      <div className="w-full bg-slate-100 h-4 rounded-full mb-8 overflow-hidden border border-slate-200 shadow-inner">
+                          <div 
+                              className={`h-full rounded-full transition-all duration-1000 ease-out ${statusInfo.progressColor}`}
+                              style={{ width: `${percentage}%` }}
+                          >
+                              <div className="w-full h-full animate-[shimmer_2s_linear_infinite] bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem]"></div>
+                          </div>
+                      </div>
 
-                    {/* Metadata Grid */}
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
-                            <div className="flex items-center gap-1.5 text-slate-400 font-bold">
-                                <MapPin size={16} /> Vị trí
-                            </div>
-                            <div className="text-slate-700 font-mono text-sm">
-                                {sensor.latitude?.toFixed(4)}, {sensor.longitude?.toFixed(4)}
-                            </div>
-                        </div>
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
-                            <div className="flex items-center gap-1.5 text-slate-400 font-bold">
-                                <Clock size={16} /> Cập nhật
-                            </div>
-                            <div className="text-slate-700 font-medium text-xs">
-                                {formatFullTime(sensor.timestamp)?.split(',')[0]}
+                      {/* Metadata Grid */}
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
+                              <div className="flex items-center gap-1.5 text-slate-400 font-bold">
+                                  <MapPin size={16} /> Vị trí
+                              </div>
+                              <div className="text-slate-700 font-mono text-sm">
+                                  {sensor.latitude?.toFixed(4)}, {sensor.longitude?.toFixed(4)}
+                              </div>
+                          </div>
+                          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
+                              <div className="flex items-center gap-1.5 text-slate-400 font-bold">
+                                  <Clock size={16} /> Cập nhật
+                              </div>
+                              <div className="text-slate-700 font-medium text-xs">
+                                  {sensor.timestamp ? formatFullTime(sensor.timestamp)?.split(',')[0] : 'N/A'}
                             </div>
                         </div>
                     </div>
@@ -286,8 +267,9 @@ const SensorsDashboard = () => {
                         <MoreVertical size={22} />
                     </button>
                 </div>
-              );
-            })}
+                );
+              })
+            )}
         </div>
 
       </div>

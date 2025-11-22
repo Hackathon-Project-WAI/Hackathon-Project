@@ -78,10 +78,35 @@ export const useHereSearch = (apiKey) => {
             locationId: item.id, // Lưu để lookup sau
           };
         });
-        // KHÔNG filter - hiển thị tất cả, lookup position khi user chọn
 
-        console.log(`✅ Formatted ${formattedSuggestions.length} suggestions`);
-        setSuggestions(formattedSuggestions);
+        // Remove duplicates by normalizing title (remove common prefixes)
+        const uniqueSuggestions = [];
+        const seenTitles = new Set();
+
+        console.log("🔍 Starting deduplication...");
+        for (const suggestion of formattedSuggestions) {
+          // Normalize: remove "Đường", lowercase, trim
+          let normalizedTitle = suggestion.title.toLowerCase().trim();
+          normalizedTitle = normalizedTitle.replace(/^đường\s+/i, "");
+          normalizedTitle = normalizedTitle.replace(/\s+/g, " ");
+
+          console.log(
+            `   Original: "${suggestion.title}" → Normalized: "${normalizedTitle}"`
+          );
+
+          if (!seenTitles.has(normalizedTitle)) {
+            seenTitles.add(normalizedTitle);
+            uniqueSuggestions.push(suggestion);
+            console.log(`   ✅ Kept`);
+          } else {
+            console.log(`   🔄 Skipped (duplicate)`);
+          }
+        }
+
+        console.log(
+          `✅ Formatted ${uniqueSuggestions.length} unique suggestions (from ${formattedSuggestions.length})`
+        );
+        setSuggestions(uniqueSuggestions);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Autocomplete error:", err);

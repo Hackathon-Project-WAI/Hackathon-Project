@@ -195,7 +195,7 @@ export const createInfoBubble = (map, position, content) => {
  * @returns {string} HTML string
  */
 export const formatFloodInfoBubble = (zoneData) => {
-  const { name, district, riskLevel, description, rainThreshold } = zoneData;
+  const { name, district, riskLevel, description, rainThreshold, type, waterLevel, floodStatus } = zoneData;
 
   const riskLabels = {
     high: "🔴 Nguy hiểm cao",
@@ -203,6 +203,39 @@ export const formatFloodInfoBubble = (zoneData) => {
     low: "🟢 Nguy hiểm thấp",
   };
 
+  // Format cho sensor data
+  if (type === 'sensor') {
+    return `
+      <div class="flood-info-bubble sensor-bubble">
+        <div class="bubble-header">
+          <h3>🌊 ${name}</h3>
+          <span class="bubble-close">×</span>
+        </div>
+        <div class="bubble-district">
+          📍 <strong>${district}</strong>
+        </div>
+        <div class="bubble-risk">
+          <strong>Mức độ:</strong> ${riskLabels[riskLevel] || riskLabels.medium}
+        </div>
+        <div class="sensor-data">
+          <div class="sensor-status">
+            <strong>Trạng thái:</strong> <span class="status-badge">${floodStatus || 'N/A'}</span>
+          </div>
+          <div class="sensor-water-level">
+            <strong>Mực nước:</strong> ${waterLevel || 0} cm
+          </div>
+          <div class="sensor-radius">
+            <strong>Bán kính cảnh báo:</strong> 20m
+          </div>
+        </div>
+        <div class="sensor-note">
+          ⚠️ Dữ liệu realtime từ cảm biến IoT
+        </div>
+      </div>
+    `;
+  }
+
+  // Format cho static flood zones
   return `
     <div class="flood-info-bubble">
       <div class="bubble-header">
