@@ -156,6 +156,73 @@ class TelegramAlertService {
   }
 
   /**
+   * Mô tả mực nước so với mặt đường
+   * @param {number} waterLevelCm - Mực nước (cm)
+   * @returns {string} - Mô tả
+   */
+  describeWaterLevel(waterLevelCm) {
+    if (waterLevelCm <= 0) return "Không có nước";
+    if (waterLevelCm < 10) return "Nước nhẹ, ướt mặt đường";
+    if (waterLevelCm < 20) return "Nước ngập đến mắt cá chân (~10-20cm)";
+    if (waterLevelCm < 40) return "Nước ngập đến bắp chân (~20-40cm)";
+    if (waterLevelCm < 60) return "Nước ngập đến đầu gối (~40-60cm)";
+    if (waterLevelCm < 80) return "Nước ngập đến đùi (~60-80cm)";
+    if (waterLevelCm < 100) return "Nước ngập đến thắt lưng (~80-100cm)";
+    return "Nước ngập rất sâu (>100cm), nguy hiểm!";
+  }
+
+  /**
+   * Tạo giải pháp cụ thể dựa trên mực nước và khoảng cách
+   * @param {object} sensor - Sensor data
+   * @param {object} location - Location data
+   * @returns {string} - Giải pháp
+   */
+  generateSolution(sensor, location) {
+    const waterLevel = sensor.waterLevel || 0;
+    const distance = sensor.distance || 0;
+    const floodStatus = sensor.floodStatus || "NORMAL";
+    const locationName = location.name || "địa điểm của bạn";
+
+    let solutions = [];
+
+    // Giải pháp dựa trên mực nước
+    if (waterLevel >= 60) {
+      solutions.push("🚗 *Di chuyển xe ngay*: Nước ngập sâu (>60cm), không nên đi xe qua khu vực này");
+      solutions.push("📦 *Bảo vệ đồ đạc*: Di chuyển đồ dùng lên cao, đóng cửa chống nước");
+      solutions.push("🚶 *Tránh đi bộ*: Nước ngập đến đùi, rất nguy hiểm");
+    } else if (waterLevel >= 40) {
+      solutions.push("🚗 *Cẩn thận khi lái xe*: Nước ngập đến đầu gối (~40-60cm), xe có thể bị hỏng");
+      solutions.push("👟 *Mang ủng cao*: Nếu phải đi bộ, mang ủng cao để tránh nước");
+      solutions.push("🔄 *Tìm đường khác*: Nên tìm tuyến đường tránh khu vực ngập");
+    } else if (waterLevel >= 20) {
+      solutions.push("🚶 *Cẩn thận khi đi bộ*: Nước ngập đến bắp chân (~20-40cm), tránh đi qua");
+      solutions.push("👟 *Mang giày chống nước*: Nếu phải đi, mang giày chống nước");
+    } else if (waterLevel >= 10) {
+      solutions.push("⚠️ *Theo dõi tình hình*: Nước bắt đầu ngập, có thể tăng cao");
+    }
+
+    // Giải pháp dựa trên khoảng cách
+    if (distance <= 100) {
+      solutions.push(`📍 *Rất gần "${locationName}"*: Sensor cách chỉ ${distance}m, nguy cơ cao`);
+      solutions.push("🚗 *Di chuyển xe đi xa*: Nếu có xe, nên di chuyển đến nơi cao hơn");
+    } else if (distance <= 300) {
+      solutions.push(`📍 *Gần "${locationName}"*: Sensor cách ${distance}m, cần theo dõi sát`);
+    } else {
+      solutions.push(`📍 *Trong phạm vi cảnh báo*: Sensor cách ${distance}m từ "${locationName}"`);
+    }
+
+    // Giải pháp dựa trên trạng thái
+    if (floodStatus === "DANGER" || floodStatus === "CRITICAL") {
+      solutions.push("⚠️ *Tránh khu vực này ngay*: Tìm tuyến đường khác an toàn hơn");
+      solutions.push("📱 *Theo dõi cập nhật*: Tình hình có thể xấu đi nhanh");
+    } else if (floodStatus === "WARNING") {
+      solutions.push("⚠️ *Theo dõi tình hình*: Có thể ngập trong thời gian tới");
+    }
+
+    return solutions.join("\n");
+  }
+
+  /**
    * Tạo tin nhắn cảnh báo từ alert data
    * @param {object} alert - Alert data
    * @param {object} location - Location data
@@ -182,10 +249,35 @@ class TelegramAlertService {
       message += `⚠️ *${alert.sensors.length} cảm biến gần đó đang cảnh báo:*\n\n`;
 
       for (const sensor of alert.sensors) {
-        message += `• *${sensor.sensorName}*\n`;
-        message += `  └ Khoảng cách: *${sensor.distance}m*\n`;
-        message += `  └ Mực nước: *${sensor.waterLevel}cm* (${sensor.waterPercent}%)\n`;
-        message += `  └ Trạng thái: *${sensor.floodStatus}*\n\n`;
+        const sensorName = sensor.sensorName || "Cảm biến";
+        const sensorAddress = sensor.address || sensor.coords?.address || "";
+        const distance = sensor.distance || 0;
+        const waterLevel = sensor.waterLevel || 0;
+        const waterPercent = sensor.waterPercent || 0;
+        const floodStatus = sensor.floodStatus || "WARNING";
+        
+        // Mô tả mực nước
+        const waterDescription = this.describeWaterLevel(waterLevel);
+
+        message += `• *${sensorName}*\n`;
+        
+        // Địa chỉ sensor nếu có
+        if (sensorAddress) {
+          message += `  📍 Địa chỉ sensor: ${sensorAddress}\n`;
+        }
+        
+        message += `  └ Khoảng cách từ "${locationName}": *${distance}m*\n`;
+        message += `  └ Mực nước: *${waterLevel}cm* (${waterPercent}%)\n`;
+        message += `  └ Mô tả: ${waterDescription}\n`;
+        message += `  └ Trạng thái: *${floodStatus}*\n\n`;
+      }
+
+      // Thêm giải pháp cho sensor đầu tiên (gần nhất)
+      if (alert.sensors.length > 0) {
+        const nearestSensor = alert.sensors[0];
+        message += `💡 *GIẢI PHÁP:*\n`;
+        message += this.generateSolution(nearestSensor, location);
+        message += `\n\n`;
       }
     }
 

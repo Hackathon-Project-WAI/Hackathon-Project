@@ -447,6 +447,12 @@ class SensorBasedAlertService {
             sensorData.timestamp || sensorData.last_updated || Date.now(),
           alertReason: reason,
           source: sensorData.source || "sensors", // Nguồn dữ liệu
+          // ✅ Thêm địa chỉ sensor nếu có
+          address:
+            sensorData.address ||
+            sensorData.location ||
+            sensorData.zone_name ||
+            null,
         });
       } else if (isInSensorRadius) {
         // Log lý do không cảnh báo để debug
