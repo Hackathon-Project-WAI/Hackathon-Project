@@ -1,0 +1,258 @@
+{
+  "info": {
+    "name": "Personalized Weather Alert API",
+    "description": "API kiểm tra cảnh báo ngập lụt cá nhân hóa cho người dùng",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Kiểm tra địa điểm + Gửi email cá nhân hóa",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"MgqmfPnodPRCjEhqyfycYavN2cK2\",\n  \"minRiskLevel\": 1,\n  \"sendEmail\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/check-user-locations-alert",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "check-user-locations-alert"]
+        },
+        "description": "Phân tích TẤT CẢ địa điểm của user, kiểm tra nguy cơ ngập, tạo email AI cá nhân hóa và gửi email.\n\n**Parameters:**\n- `userId` (required): ID người dùng trong Firestore\n- `minRiskLevel` (optional, default: 1): Ngưỡng cảnh báo (0=an toàn, 1=cảnh báo, 2=nguy hiểm, 3=nghiêm trọng)\n- `sendEmail` (optional, default: true): Có gửi email hay không\n\n**Response:**\n- Danh sách cảnh báo đã tạo\n- Thông tin email đã gửi\n- Log được lưu vào Firestore"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Kiểm tra chỉ xem (KHÔNG gửi email)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"MgqmfPnodPRCjEhqyfycYavN2cK2\",\n  \"minRiskLevel\": 0,\n  \"sendEmail\": false\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/check-user-locations-alert",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "check-user-locations-alert"]
+        },
+        "description": "Chỉ phân tích và xem kết quả, KHÔNG gửi email. Dùng để test hoặc preview.\n\n**Khác biệt:**\n- `minRiskLevel: 0` → Kiểm tra tất cả mức độ (kể cả an toàn)\n- `sendEmail: false` → Không gửi email"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Lấy danh sách địa điểm của user",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/api/user-locations/MgqmfPnodPRCjEhqyfycYavN2cK2",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "user-locations", "MgqmfPnodPRCjEhqyfycYavN2cK2"]
+        },
+        "description": "Lấy tất cả địa điểm mà user đã lưu trong Firestore.\n\n**Path Parameter:**\n- `userId`: ID người dùng\n\n**Response:**\n- Danh sách locations với tọa độ, alertRadius, priority, status"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Phân tích thời tiết theo tọa độ",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lat\": 16.0678,\n  \"lon\": 108.2208,\n  \"to\": \"your-email@gmail.com\",\n  \"minRiskLevel\": 1,\n  \"includeAllAreas\": false\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/analyze-weather-alert",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "analyze-weather-alert"]
+        },
+        "description": "Phân tích thời tiết theo tọa độ (KHÔNG cá nhân hóa theo user).\n\n**Parameters:**\n- `lat`, `lon`: Tọa độ cần kiểm tra\n- `to`: Email nhận cảnh báo\n- `minRiskLevel`: Ngưỡng cảnh báo\n- `includeAllAreas`: true để xem tất cả khu vực dự báo"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Cảnh báo từ cảm biến IoT (% ngập)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current_percent\": 85,\n  \"previous_percent\": 50,\n  \"location\": \"Cống Phan Đình Phùng\",\n  \"timestamp\": \"2025-11-19T14:30:00\",\n  \"to\": \"your-email@gmail.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/generate-flood-alert",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "generate-flood-alert"]
+        },
+        "description": "Tạo cảnh báo từ dữ liệu cảm biến IoT (% ngập).\n\n**Parameters:**\n- `current_percent`: Mức ngập hiện tại (%)\n- `previous_percent`: Mức ngập trước đó (%)\n- `location`: Tên địa điểm\n- `timestamp`: Thời gian (ISO format)\n- `to`: Email nhận cảnh báo"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Test Email đơn giản",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"your-email@gmail.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/send-test-email",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "send-test-email"]
+        },
+        "description": "Gửi email test đơn giản để kiểm tra email service hoạt động.\n\n**Use case:** Test SMTP config trước khi chạy API phức tạp."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Lấy dữ liệu Firebase Sensors",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/api/firebase/sensors",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "firebase", "sensors"]
+        },
+        "description": "Lấy tất cả dữ liệu từ Firebase Realtime Database (sensors/flood)."
+      },
+      "response": []
+    },
+    {
+      "name": "8. Kiểm tra 1 sensor cụ thể",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/api/firebase/sensors/SENSOR_ROAD",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "firebase", "sensors", "SENSOR_ROAD"]
+        },
+        "description": "Lấy dữ liệu 1 sensor cụ thể từ Firebase.\n\n**Path Parameter:**\n- `sensorId`: SENSOR_ROAD hoặc SENSOR_SEWER"
+      },
+      "response": []
+    },
+    {
+      "name": "9. Đọc Firebase + Tạo cảnh báo AI",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sensorId\": \"SENSOR_ROAD\",\n  \"to\": \"your-email@gmail.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/check-firebase-and-alert",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "check-firebase-and-alert"]
+        },
+        "description": "Đọc dữ liệu sensor từ Firebase, nếu >= 80% thì tạo cảnh báo AI và gửi email."
+      },
+      "response": []
+    },
+    {
+      "name": "10. Kiểm tra IoT data structure mới",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sensorId\": \"SENSOR_ROAD\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3001/api/check-iot-data",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3001",
+          "path": ["api", "check-iot-data"]
+        },
+        "description": "Đọc dữ liệu từ iotData/SENSOR_ROAD hoặc iotData/SENSOR_SEWER.\n\nChuyển water_level_cm → % và kiểm tra ngưỡng nguy hiểm."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "MgqmfPnodPRCjEhqyfycYavN2cK2",
+      "type": "string"
+    },
+    {
+      "key": "testEmail",
+      "value": "your-email@gmail.com",
+      "type": "string"
+    }
+  ]
+}
+
+

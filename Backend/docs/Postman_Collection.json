@@ -1,0 +1,325 @@
+{
+  "info": {
+    "name": "Flood Alert System - Gemini AI",
+    "description": "API Collection để test hệ thống cảnh báo ngập lụt với Gemini AI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔥 FAKE DATA - IoT Simulation",
+      "item": [
+        {
+          "name": "1. POST Fake Data lên Firebase (Sensor 001)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Cống Phan Đình Phùng, Đà Nẵng\",\n  \"current_percent\": 85,\n  \"previous_percent\": 50,\n  \"timestamp\": \"2025-11-19T14:30:00\"\n}"
+            },
+            "url": {
+              "raw": "https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_001.json",
+              "protocol": "https",
+              "host": [
+                "hackathon-weather-634bf-default-rtdb",
+                "firebaseio",
+                "com"
+              ],
+              "path": [
+                "sensors",
+                "flood",
+                "sensor_001.json"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Gọi Backend Đọc Firebase và Gửi Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sensorId\": \"sensor_001\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/check-firebase-and-alert",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3001",
+              "path": [
+                "api",
+                "check-firebase-and-alert"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 TEST CASES",
+      "item": [
+        {
+          "name": "TEST 1: Ngập Nguy Hiểm (85%)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Cầu Rồng, Đà Nẵng\",\n  \"current_percent\": 85,\n  \"previous_percent\": 50,\n  \"timestamp\": \"2025-11-19T14:30:00\"\n}"
+            },
+            "url": {
+              "raw": "https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_high.json",
+              "protocol": "https",
+              "host": [
+                "hackathon-weather-634bf-default-rtdb",
+                "firebaseio",
+                "com"
+              ],
+              "path": [
+                "sensors",
+                "flood",
+                "sensor_test_high.json"
+              ]
+            }
+          }
+        },
+        {
+          "name": "TEST 2: Ngập Trung Bình (65%)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Đường Lê Duẩn, Đà Nẵng\",\n  \"current_percent\": 65,\n  \"previous_percent\": 55,\n  \"timestamp\": \"2025-11-19T15:00:00\"\n}"
+            },
+            "url": {
+              "raw": "https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_medium.json",
+              "protocol": "https",
+              "host": [
+                "hackathon-weather-634bf-default-rtdb",
+                "firebaseio",
+                "com"
+              ],
+              "path": [
+                "sensors",
+                "flood",
+                "sensor_test_medium.json"
+              ]
+            }
+          }
+        },
+        {
+          "name": "TEST 3: An Toàn (40%)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Cống Hòa Xuân, Đà Nẵng\",\n  \"current_percent\": 40,\n  \"previous_percent\": 35,\n  \"timestamp\": \"2025-11-19T15:30:00\"\n}"
+            },
+            "url": {
+              "raw": "https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_safe.json",
+              "protocol": "https",
+              "host": [
+                "hackathon-weather-634bf-default-rtdb",
+                "firebaseio",
+                "com"
+              ],
+              "path": [
+                "sensors",
+                "flood",
+                "sensor_test_safe.json"
+              ]
+            }
+          }
+        },
+        {
+          "name": "TEST 4: Nước Tăng Nhanh (90%)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Cống Hải Châu, Đà Nẵng\",\n  \"current_percent\": 90,\n  \"previous_percent\": 45,\n  \"timestamp\": \"2025-11-19T16:00:00\"\n}"
+            },
+            "url": {
+              "raw": "https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_rapid.json",
+              "protocol": "https",
+              "host": [
+                "hackathon-weather-634bf-default-rtdb",
+                "firebaseio",
+                "com"
+              ],
+              "path": [
+                "sensors",
+                "flood",
+                "sensor_test_rapid.json"
+              ]
+            }
+          }
+        },
+        {
+          "name": "TEST 5: Cực Kỳ Nguy Hiểm (95%)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": \"Ngã Tư Lê Duẩn - Điện Biên Phủ\",\n  \"current_percent\": 95,\n  \"previous_percent\": 88,\n  \"timestamp\": \"2025-11-19T16:30:00\"\n}"
+            },
+            "url": {
+              "raw": "https://hackathon-weather-634bf-default-rtdb.firebaseio.com/sensors/flood/sensor_test_critical.json",
+              "protocol": "https",
+              "host": [
+                "hackathon-weather-634bf-default-rtdb",
+                "firebaseio",
+                "com"
+              ],
+              "path": [
+                "sensors",
+                "flood",
+                "sensor_test_critical.json"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Read Firebase Data",
+      "item": [
+        {
+          "name": "Đọc Tất Cả Sensors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3001/api/firebase/sensors",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3001",
+              "path": [
+                "api",
+                "firebase",
+                "sensors"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Đọc 1 Sensor Cụ Thể",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3001/api/firebase/sensors/sensor_001",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3001",
+              "path": [
+                "api",
+                "firebase",
+                "sensors",
+                "sensor_001"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 Gemini AI - Direct Call",
+      "item": [
+        {
+          "name": "Tạo Alert Trực Tiếp (Không qua Firebase)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_percent\": 85,\n  \"previous_percent\": 50,\n  \"location\": \"Cống Phan Đình Phùng, Đà Nẵng\",\n  \"timestamp\": \"2025-11-19T14:30:00\",\n  \"to\": \"trantafi2204@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/api/generate-flood-alert",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3001",
+              "path": [
+                "api",
+                "generate-flood-alert"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Server",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3001",
+          "path": [
+            ""
+          ]
+        }
+      }
+    }
+  ]
+}
+

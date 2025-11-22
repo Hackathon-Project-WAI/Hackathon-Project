@@ -1,0 +1,612 @@
+{
+  "info": {
+    "_postman_id": "flood-alert-complete-api-2024",
+    "name": "Flood Alert System - Complete API Collection",
+    "description": "Collection đầy đủ để test tất cả các API của hệ thống cảnh báo lũ lụt\n\n**Base URL:** http://localhost:3001\n\n**Chức năng chính:**\n- 🏥 Health Check\n- 📧 Email Alerts\n- 🤖 AI Flood Alerts (Gemini)\n- 🔥 Firebase Data Management\n- 🎯 Personalized Alerts\n- ⚙️ Alert Settings & Auto Alert\n- 📱 Telegram Bot Integration\n\n**Cách sử dụng:**\n1. Đảm bảo server đang chạy tại port 3001\n2. Cập nhật biến môi trường nếu cần\n3. Chạy từng request hoặc toàn bộ collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Get API Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/",
+              "host": ["{{BASE_URL}}"],
+              "path": [""]
+            },
+            "description": "Kiểm tra trạng thái API và xem danh sách tất cả endpoints"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📧 Email Alerts",
+      "item": [
+        {
+          "name": "Send Premium Alert (NEW ⭐ CM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"viettaiifptudh@gmail.com\",\n  \"alertData\": {\n    \"location\": \"Đà Nẵng\",\n    \"riskLevel\": \"CAO\",\n    \"alertLevel\": \"Mức báo động 3\",\n    \"waterLevel_cm\": 120,\n    \"maxWaterLevel\": 150,\n    \"threshold\": \"Vượt mức an toàn 30cm\",\n    \"rateOfChange\": \"Nhanh\",\n    \"rateDetail\": \"+10cm / 5 phút\",\n    \"description\": \"RẤT NGUY HIỂM\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/send-premium-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "send-premium-alert"]
+            },
+            "description": "🔥 NEW! Template email cao cấp với hiển thị theo CM. Responsive, đẹp mắt, dashboard 3 cards. Yêu cầu: to (email), alertData (object với waterLevel_cm, maxWaterLevel, v.v.)"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Premium Alert (NEW ⭐ %)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"viettaiifptudh@gmail.com\",\n  \"alertData\": {\n    \"location\": \"Hải Châu, Đà Nẵng\",\n    \"riskLevel\": \"TRUNG BÌNH\",\n    \"alertLevel\": \"Mức báo động 2\",\n    \"waterPercent\": 75,\n    \"threshold\": \"Vượt ngưỡng 70%\",\n    \"rateOfChange\": \"Trung bình\",\n    \"rateDetail\": \"+5% / 5 phút\",\n    \"description\": \"NGUY HIỂM\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/send-premium-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "send-premium-alert"]
+            },
+            "description": "🔥 NEW! Template email cao cấp với hiển thị theo %. Fallback khi không có dữ liệu cm. Yêu cầu: to (email), alertData (object với waterPercent)"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Test Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"test@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/send-test-email",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "send-test-email"]
+            },
+            "description": "Gửi test email để kiểm tra email service"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Custom Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Cảnh báo tùy chỉnh\",\n  \"html\": \"<h1>Nội dung email</h1><p>Đây là email tùy chỉnh</p>\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/send-email",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "send-email"]
+            },
+            "description": "Gửi email với nội dung tùy chỉnh"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Flood Alert Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"alertData\": {\n    \"location\": \"Đà Nẵng, Việt Nam\",\n    \"severity\": \"high\",\n    \"alertMessage\": \"Cảnh báo lũ lụt nghiêm trọng\",\n    \"recommendations\": [\n      \"Di chuyển đến nơi cao\",\n      \"Chuẩn bị đồ ăn và nước uống\",\n      \"Theo dõi thông tin từ chính quyền\"\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/send-flood-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "send-flood-alert"]
+            },
+            "description": "Gửi cảnh báo lũ lụt qua email. Yêu cầu: to (bắt buộc), alertData (object)"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Weather Update Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"weatherData\": {\n    \"location\": \"Đà Nẵng\",\n    \"temp\": 28,\n    \"humidity\": 85,\n    \"description\": \"Mưa vừa\",\n    \"windSpeed\": 15\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/send-weather-update",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "send-weather-update"]
+            },
+            "description": "Gửi cập nhật thời tiết qua email. Yêu cầu: to (bắt buộc), weatherData (object)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🤖 AI Flood Alerts (Gemini)",
+      "item": [
+        {
+          "name": "Generate AI Flood Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_percent\": 85,\n  \"previous_percent\": 70,\n  \"location\": \"Đà Nẵng, Việt Nam\",\n  \"timestamp\": \"2024-11-22T10:00:00Z\",\n  \"to\": \"viettaiifptudh@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/generate-flood-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "generate-flood-alert"]
+            },
+            "description": "Sử dụng AI (Gemini) để tạo cảnh báo thông minh. Yêu cầu: current_percent (bắt buộc), location (bắt buộc), previous_percent, timestamp, to (email)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔥 Firebase Data",
+      "item": [
+        {
+          "name": "Get All Sensors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/firebase/sensors",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "firebase", "sensors"]
+            },
+            "description": "Lấy dữ liệu tất cả các cảm biến từ Firebase"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sensor By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/firebase/sensors/{{SENSOR_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "firebase", "sensors", "{{SENSOR_ID}}"]
+            },
+            "description": "Lấy dữ liệu của một cảm biến cụ thể"
+          },
+          "response": []
+        },
+        {
+          "name": "Write Firebase Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"sensors/test-sensor\",\n  \"data\": {\n    \"waterLevel\": 150,\n    \"temperature\": 28,\n    \"humidity\": 85,\n    \"timestamp\": \"2024-11-22T10:00:00Z\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/firebase/write",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "firebase", "write"]
+            },
+            "description": "Ghi dữ liệu vào Firebase Realtime Database"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Firebase & Send Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sensorId\": \"sensor1\",\n  \"to\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/check-firebase-and-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "check-firebase-and-alert"]
+            },
+            "description": "Kiểm tra Firebase và gửi cảnh báo nếu phát hiện nguy hiểm. Yêu cầu: sensorId (bắt buộc), to (tùy chọn)"
+          },
+          "response": []
+        },
+        {
+          "name": "Check IoT Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sensorId\": \"SENSOR_ROAD\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/check-iot-data",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "check-iot-data"]
+            },
+            "description": "Kiểm tra dữ liệu IoT và gửi cảnh báo nếu cần. Yêu cầu: sensorId (SENSOR_ROAD hoặc SENSOR_SEWER)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎯 Personalized Alerts",
+      "item": [
+        {
+          "name": "Check User Locations Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{USER_ID}}\",\n  \"minRiskLevel\": 1,\n  \"sendEmail\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/check-user-locations-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "check-user-locations-alert"]
+            },
+            "description": "Kiểm tra tất cả các vị trí của user và gửi cảnh báo nếu có nguy hiểm. Yêu cầu: userId (bắt buộc), minRiskLevel (0-3, mặc định 1), sendEmail (true/false, mặc định true)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/user-locations/{{USER_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user-locations", "{{USER_ID}}"]
+            },
+            "description": "Lấy tất cả các vị trí đã lưu của user"
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze Weather Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": 16.0544,\n  \"lon\": 108.2022,\n  \"areaId\": \"da-nang-hai-chau\",\n  \"to\": \"user@example.com\",\n  \"minRiskLevel\": 1,\n  \"includeAllAreas\": false\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/analyze-weather-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "analyze-weather-alert"]
+            },
+            "description": "Phân tích thời tiết và gửi cảnh báo cho vị trí cụ thể. Yêu cầu: lat (bắt buộc), lon (bắt buộc), areaId (tùy chọn), to (email, tùy chọn), minRiskLevel (0-3, mặc định 1), includeAllAreas (true/false)"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Sensor Based Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{USER_ID}}\",\n  \"sendEmail\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/check-sensor-based-alert",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "check-sensor-based-alert"]
+            },
+            "description": "Kiểm tra cảnh báo dựa trên dữ liệu cảm biến gần vị trí user. Yêu cầu: userId (bắt buộc), sendEmail (true/false, mặc định true)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Alert Settings & Auto Alert",
+      "item": [
+        {
+          "name": "Get Alert Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/alert-settings/{{USER_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "alert-settings", "{{USER_ID}}"]
+            },
+            "description": "Lấy cấu hình cảnh báo tự động của user"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Alert Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"enabled\": true,\n  \"checkIntervalMinutes\": 30,\n  \"sensorIds\": [\"SENSOR_ROAD\", \"SENSOR_SEWER\"],\n  \"threshold\": 80,\n  \"alertMethods\": {\n    \"email\": true,\n    \"telegram\": false\n  },\n  \"preferences\": {\n    \"maxDistance\": 5,\n    \"minWaterLevel\": 100,\n    \"notificationTime\": \"always\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/alert-settings/{{USER_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "alert-settings", "{{USER_ID}}"]
+            },
+            "description": "Cập nhật cấu hình cảnh báo tự động. Có thể gửi toàn bộ settings object hoặc chỉ các field muốn update"
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Alert Settings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/alert-settings/{{USER_ID}}/toggle",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "alert-settings", "{{USER_ID}}", "toggle"]
+            },
+            "description": "Bật/tắt cảnh báo tự động. Yêu cầu: enabled (true/false, bắt buộc)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Alert Settings",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/alert-settings/{{USER_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "alert-settings", "{{USER_ID}}"]
+            },
+            "description": "Xóa cấu hình cảnh báo tự động"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/alert-settings/{{USER_ID}}/logs?limit=10",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "alert-settings", "{{USER_ID}}", "logs"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Số lượng logs tối đa"
+                }
+              ]
+            },
+            "description": "Lấy lịch sử cảnh báo đã gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Alert Now",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/alert-settings/{{USER_ID}}/test",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "alert-settings", "{{USER_ID}}", "test"]
+            },
+            "description": "Test gửi cảnh báo ngay lập tức"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Scheduler Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/scheduler/status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "scheduler", "status"]
+            },
+            "description": "Lấy trạng thái của scheduler service (auto alert)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📱 Telegram Bot",
+      "item": [
+        {
+          "name": "Get Telegram QR Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/telegram/qr-info",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "telegram", "qr-info"]
+            },
+            "description": "Lấy thông tin để tạo QR code liên kết Telegram"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bot Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/telegram/info",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "telegram", "info"]
+            },
+            "description": "Lấy thông tin chi tiết về Telegram bot"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Telegram Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/telegram/status?userId={{USER_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "telegram", "status"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{USER_ID}}",
+                  "description": "Firebase User ID"
+                }
+              ]
+            },
+            "description": "Kiểm tra trạng thái liên kết Telegram của user"
+          },
+          "response": []
+        },
+        {
+          "name": "Unlink Telegram",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{USER_ID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/telegram/unlink",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "telegram", "unlink"]
+            },
+            "description": "Hủy liên kết Telegram"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "USER_ID",
+      "value": "user123",
+      "type": "string"
+    },
+    {
+      "key": "SENSOR_ID",
+      "value": "sensor1",
+      "type": "string"
+    }
+  ]
+}
