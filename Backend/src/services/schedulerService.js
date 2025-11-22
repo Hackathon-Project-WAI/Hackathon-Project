@@ -72,12 +72,26 @@ class SchedulerService {
       clearInterval(this.intervals.get(userId));
     }
 
-    const { checkInterval, sensorIds, threshold, email } = settings;
+    const { checkInterval: rawCheckInterval, sensorIds, threshold, email } = settings;
 
+    // ⭐ QUAN TRỌNG: Convert checkInterval từ phút sang milliseconds nếu cần
+    // Frontend lưu checkInterval dưới dạng phút (ví dụ: 15), backend cần milliseconds (ví dụ: 900000)
+    // Nếu checkInterval < 1000, coi như là phút và convert sang milliseconds
+    let checkInterval;
+    if (rawCheckInterval < 1000) {
+      // Nếu < 1000, coi như là phút
+      checkInterval = rawCheckInterval * 60 * 1000; // Convert phút -> milliseconds
+      console.log(
+        `🔄 [${userId}] Convert checkInterval từ ${rawCheckInterval} phút → ${checkInterval}ms`
+      );
+    } else {
+      // Nếu >= 1000, coi như đã là milliseconds
+      checkInterval = rawCheckInterval;
+    }
+
+    const intervalMinutes = checkInterval / (60 * 1000);
     console.log(
-      `⏰ Khởi động scheduler cho user ${userId} - Check mỗi ${
-        checkInterval / 1000
-      }s`
+      `⏰ Khởi động scheduler cho user ${userId} - Check mỗi ${intervalMinutes} phút (${checkInterval}ms)`
     );
 
     // Tạo interval mới

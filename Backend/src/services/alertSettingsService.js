@@ -22,10 +22,24 @@ class AlertSettingsService {
       }
 
       const settings = snapshot.val();
-      return {
+      const mergedSettings = {
         ...this.getDefaultSettings(),
         ...settings,
       };
+
+      // ⭐ QUAN TRỌNG: Đảm bảo checkInterval luôn là milliseconds
+      if (mergedSettings.checkInterval !== undefined) {
+        const rawCheckInterval = mergedSettings.checkInterval;
+        // Nếu checkInterval < 1000, coi như là phút và convert sang milliseconds
+        if (rawCheckInterval < 1000) {
+          mergedSettings.checkInterval = rawCheckInterval * 60 * 1000; // Convert phút -> milliseconds
+          console.log(
+            `🔄 [${userId}] Convert checkInterval từ ${rawCheckInterval} phút → ${mergedSettings.checkInterval}ms khi get`
+          );
+        }
+      }
+
+      return mergedSettings;
     } catch (error) {
       console.error(`Lỗi lấy alert settings cho user ${userId}:`, error);
       throw error;
@@ -46,15 +60,35 @@ class AlertSettingsService {
       // Lấy settings hiện tại
       const currentSettings = await this.getAlertSettings(userId);
 
-      // Merge với settings mới
+      // ⭐ QUAN TRỌNG: Convert checkInterval từ phút sang milliseconds nếu cần
+      let processedSettings = { ...settings };
+      if (settings.checkInterval !== undefined) {
+        const rawCheckInterval = settings.checkInterval;
+        // Nếu checkInterval < 1000, coi như là phút và convert sang milliseconds
+        if (rawCheckInterval < 1000) {
+          processedSettings.checkInterval = rawCheckInterval * 60 * 1000; // Convert phút -> milliseconds
+          console.log(
+            `🔄 [${userId}] Convert checkInterval từ ${rawCheckInterval} phút → ${processedSettings.checkInterval}ms khi update`
+          );
+        } else {
+          // Nếu >= 1000, coi như đã là milliseconds
+          processedSettings.checkInterval = rawCheckInterval;
+        }
+      }
+
+      // Merge với settings hiện tại
       const updatedSettings = {
         ...currentSettings,
-        ...settings,
+        ...processedSettings,
         updatedAt: Date.now(),
       };
 
       // Lưu vào Firebase
       await settingsRef.set(updatedSettings);
+
+      console.log(
+        `✅ [${userId}] Đã cập nhật alert settings - checkInterval: ${updatedSettings.checkInterval}ms (${updatedSettings.checkInterval / (60 * 1000)} phút)`
+      );
 
       return {
         success: true,
