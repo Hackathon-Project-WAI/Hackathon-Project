@@ -27,8 +27,10 @@ async function checkTelegramStatus(req, res) {
     const chatIdSnapshot = await chatIdRef.once('value');
     const chatId = chatIdSnapshot.val();
     
-    // Kiểm tra có username không
+    // Kiểm tra có username và is_active không
     let telegramUsername = null;
+    let isActive = false;
+    
     if (chatId) {
       const telegramUserRef = db.ref('telegram_users').orderByChild('chat_id').equalTo(chatId);
       const telegramSnapshot = await telegramUserRef.once('value');
@@ -36,11 +38,22 @@ async function checkTelegramStatus(req, res) {
       if (telegramSnapshot.exists()) {
         const users = telegramSnapshot.val();
         const userKey = Object.keys(users)[0];
-        telegramUsername = users[userKey].username || users[userKey].first_name || 'User';
+        const userData = users[userKey];
+        
+        telegramUsername = userData.username || userData.first_name || 'User';
+        isActive = userData.is_active === true; // Check is_active status
+        
+        console.log(`🔍 Telegram status cho user ${userId}:`, {
+          chatId,
+          username: telegramUsername,
+          isActive,
+          firebase_user_id: userData.firebase_user_id
+        });
       }
     }
 
-    const isLinked = !!chatId;
+    // Chỉ considered "linked" nếu có chatId VÀ is_active = true
+    const isLinked = !!chatId && isActive;
 
     return res.json({
       success: true,
@@ -48,6 +61,7 @@ async function checkTelegramStatus(req, res) {
         isLinked: isLinked,
         chatId: chatId,
         username: telegramUsername,
+        isActive: isActive,
         linkedAt: isLinked ? chatIdSnapshot.val() : null,
       },
     });

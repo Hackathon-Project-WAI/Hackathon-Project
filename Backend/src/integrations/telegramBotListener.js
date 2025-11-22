@@ -330,17 +330,27 @@ async function startBot(botToken) {
   console.log('🤖 Khởi động Telegram Bot (Long Polling)...');
   console.log('🔥 Sử dụng Firebase Realtime Database (REST API)');
   
-  // Kiểm tra Bot Token
+  // Kiểm tra Bot Token với error handling tốt hơn
   try {
-    const response = await axios.get(`${TELEGRAM_API_URL}/getMe`);
+    const response = await axios.get(`${TELEGRAM_API_URL}/getMe`, {
+      timeout: 10000 // 10 giây timeout
+    });
     if (response.data.ok) {
       console.log(`✅ Bot đã kết nối: @${response.data.result.username}`);
+      console.log(`🤖 Bot ID: ${response.data.result.id}`);
     } else {
-      console.error('❌ Bot Token không hợp lệ');
+      console.error('❌ Bot Token không hợp lệ:', response.data);
       throw new Error('Invalid bot token');
     }
   } catch (error) {
     console.error('❌ Không thể kết nối với Telegram API:', error.message);
+    if (error.response) {
+      console.error('📋 Response status:', error.response.status);
+      console.error('📋 Response data:', error.response.data);
+    }
+    if (error.code === 'ENOTFOUND') {
+      console.error('🌐 Không thể kết nối đến api.telegram.org - Kiểm tra kết nối mạng');
+    }
     throw error;
   }
   
