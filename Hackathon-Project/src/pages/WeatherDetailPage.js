@@ -110,103 +110,11 @@ const WeatherDetailPage = () => {
               </p>
             </div>
           </div>
-
-          {/* Tabs */}
-          <div className="p-1 glass-card rounded-xl flex">
-            <button
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-                activeTab === "weather"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-blue-600"
-              }`}
-              onClick={() => setActiveTab("weather")}
-            >
-              <i className="fa-solid fa-sun"></i> Thời Tiết
-            </button>
-            <button
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-                activeTab === "flood"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-blue-600"
-              }`}
-              onClick={() => setActiveTab("flood")}
-            >
-              <i className="fa-solid fa-flask"></i> Đang phát triển
-            </button>
-          </div>
         </div>
 
         {/* Content */}
         <div className="w-full">
-          {activeTab === "weather" ? (
-            <WeatherDisplay />
-          ) : activeFeature ? (
-            renderFeatureContent()
-          ) : (
-            /* Features Grid */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Feature Card 1 */}
-              <div
-                className="glass-card rounded-2xl p-6 cursor-pointer group"
-                onClick={() => setActiveFeature("location-alerts")}
-              >
-                <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-map-location-dot text-xl"></i>
-                </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">
-                  Cảnh báo khu vực
-                </h3>
-                <p className="text-sm text-slate-500 mb-4">
-                  Nhận cảnh báo ngập lụt cho các địa điểm quan trọng của bạn.
-                </p>
-                {user && locations.length > 0 && (
-                  <span className="px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-bold border border-red-100">
-                    {locations.length} địa điểm
-                  </span>
-                )}
-              </div>
-
-              {/* Feature Card 2 */}
-              <div
-                className="glass-card rounded-2xl p-6 cursor-pointer group"
-                onClick={() => setActiveFeature("realtime-alerts")}
-              >
-                <div className="w-12 h-12 rounded-xl bg-yellow-100 text-yellow-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-bolt text-xl"></i>
-                </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">
-                  Real-time IoT
-                </h3>
-                <p className="text-sm text-slate-500 mb-4">
-                  Theo dõi dữ liệu cảm biến mực nước theo thời gian thực.
-                </p>
-                {dangerousSensors.length > 0 && (
-                  <span className="px-3 py-1 rounded-full bg-yellow-50 text-yellow-600 text-xs font-bold border border-yellow-100 animate-pulse">
-                    {dangerousSensors.length} cảnh báo
-                  </span>
-                )}
-              </div>
-
-              {/* Feature Card 3 */}
-              <div
-                className="glass-card rounded-2xl p-6 cursor-pointer group border-2 border-blue-400/30 bg-blue-50/50"
-                onClick={() => setActiveFeature("auto-alert")}
-              >
-                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-cogs text-xl"></i>
-                </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">
-                  Hệ thống tự động
-                </h3>
-                <p className="text-sm text-slate-500 mb-4">
-                  Tự động quét và gửi cảnh báo qua email 24/7.
-                </p>
-                <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-bold border border-blue-200">
-                  Premium
-                </span>
-              </div>
-            </div>
-          )}
+          <WeatherDisplay />
         </div>
       </main>
     </div>
