@@ -144,5 +144,4 @@ module.exports = {
   sendWeatherUpdate,
   sendAIFloodAlert,
   sendPremiumFloodAlert,
-  sendEmailResend,
 };
