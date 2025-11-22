@@ -24,11 +24,7 @@
 
 /* Right side - Showcase */
 .login-page-right {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.1) 0%,
-    rgba(29, 78, 216, 0.1) 100%
-  );
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
   backdrop-filter: blur(10px);
   border-left: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -115,7 +111,7 @@
 /* Animated background circles */
 .login-page::before,
 .login-page::after {
-  content: "";
+  content: '';
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
@@ -142,8 +138,7 @@
 }
 
 @keyframes float {
-  0%,
-  100% {
+  0%, 100% {
     transform: translateY(0) scale(1);
   }
   50% {
@@ -285,16 +280,9 @@
 }
 
 @keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-10px);
-  }
-  75% {
-    transform: translateX(10px);
-  }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
 }
 
 .error-icon {
@@ -365,7 +353,7 @@
 }
 
 .btn-login::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -409,7 +397,7 @@
 
 .divider::before,
 .divider::after {
-  content: "";
+  content: '';
   flex: 1;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -521,3 +509,4 @@
     font-size: 16px;
   }
 }
+

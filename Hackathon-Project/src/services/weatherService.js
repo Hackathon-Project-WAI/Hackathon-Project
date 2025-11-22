@@ -85,6 +85,7 @@ class WeatherService {
    * @returns {Promise<Array>} Dữ liệu hourly 48 giờ tới
    */
   async getHourlyForecast(lat = 16.0544, lon = 108.2022) {
+    console.log(`🌦️ OpenWeather API: Gọi getHourlyForecast(${lat}, ${lon})`);
     // Dùng trực tiếp Free Tier API - không cần One Call API
     return await this.getForecastHourly(lat, lon);
   }

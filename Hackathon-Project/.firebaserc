@@ -1,7 +1,16 @@
 {
-  "projects": {
-    "default": "hackathon-weather-634bf"
-  },
-  "targets": {},
-  "etags": {}
+  "hosting": {
+    "public": "build",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }

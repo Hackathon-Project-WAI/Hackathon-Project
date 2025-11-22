@@ -3,8 +3,8 @@
  * Hook để khởi tạo và quản lý HERE Map
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { MAP_CONFIG } from "../utils/routeConstants";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { MAP_CONFIG } from '../utils/routeConstants';
 
 export const useHereMap = (apiKey, mapContainerRef) => {
   const map = useRef(null);
@@ -17,10 +17,9 @@ export const useHereMap = (apiKey, mapContainerRef) => {
    */
   useEffect(() => {
     if (!window.H || !mapContainerRef.current || !apiKey) {
-      if (!window.H) console.error("HERE Maps library chưa được load");
-      if (!mapContainerRef.current)
-        console.error("Map container chưa sẵn sàng");
-      if (!apiKey) console.error("Thiếu API key");
+      if (!window.H) console.error('HERE Maps library chưa được load');
+      if (!mapContainerRef.current) console.error('Map container chưa sẵn sàng');
+      if (!apiKey) console.error('Thiếu API key');
       return;
     }
 
@@ -31,8 +30,8 @@ export const useHereMap = (apiKey, mapContainerRef) => {
           apikey: apiKey,
         });
       } catch (err) {
-        console.error("Lỗi khởi tạo platform:", err);
-        setError("Không thể khởi tạo HERE Maps Platform");
+        console.error('Lỗi khởi tạo platform:', err);
+        setError('Không thể khởi tạo HERE Maps Platform');
         return;
       }
     }
@@ -67,17 +66,17 @@ export const useHereMap = (apiKey, mapContainerRef) => {
           }
         };
 
-        window.addEventListener("resize", handleResize);
+        window.addEventListener('resize', handleResize);
 
-        console.log("✅ Map initialized successfully");
+        console.log('✅ Map initialized successfully');
         setMapReady(true);
 
         return () => {
-          window.removeEventListener("resize", handleResize);
+          window.removeEventListener('resize', handleResize);
         };
       } catch (err) {
-        console.error("Lỗi khi khởi tạo map:", err);
-        setError("Không thể khởi tạo bản đồ");
+        console.error('Lỗi khi khởi tạo map:', err);
+        setError('Không thể khởi tạo bản đồ');
       }
     }
   }, [apiKey, mapContainerRef]);
@@ -115,7 +114,7 @@ export const useHereMap = (apiKey, mapContainerRef) => {
    */
   const getRoutingService = useCallback(() => {
     if (!platform.current) {
-      console.error("Platform not initialized");
+      console.error('Platform not initialized');
       return null;
     }
 
@@ -123,7 +122,7 @@ export const useHereMap = (apiKey, mapContainerRef) => {
       // HERE Maps Platform API v8 sử dụng router trực tiếp
       return platform.current.getRoutingService(null, 8);
     } catch (err) {
-      console.error("Error getting routing service:", err);
+      console.error('Error getting routing service:', err);
       return null;
     }
   }, []);
@@ -153,7 +152,7 @@ export const useHereMap = (apiKey, mapContainerRef) => {
     if (!map.current) return;
 
     map.current.addEventListener(eventType, handler);
-
+    
     // Return cleanup function
     return () => {
       if (map.current) {
@@ -186,3 +185,9 @@ export const useHereMap = (apiKey, mapContainerRef) => {
     screenToGeo,
   };
 };
+
+
+
+
+
+

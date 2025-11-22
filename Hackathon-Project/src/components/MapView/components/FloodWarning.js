@@ -3,8 +3,8 @@
  * Component cảnh báo vùng ngập
  */
 
-import React, { memo } from "react";
-import "./FloodWarning.css";
+import React, { memo } from 'react';
+import './FloodWarning.css';
 
 const FloodWarning = memo(({ warning }) => {
   if (!warning || !warning.zones || warning.zones.length === 0) return null;
@@ -32,13 +32,19 @@ const FloodWarning = memo(({ warning }) => {
       </div>
 
       <p className="warning-note">
-        💡 Hệ thống đã cố gắng tìm đường tránh ngập. Nếu không tránh được, vui
-        lòng cân nhắc tuyến đường khác.
+        💡 Hệ thống đã cố gắng tìm đường tránh ngập. Nếu không tránh được, vui lòng cân nhắc
+        tuyến đường khác.
       </p>
     </div>
   );
 });
 
-FloodWarning.displayName = "FloodWarning";
+FloodWarning.displayName = 'FloodWarning';
 
 export default FloodWarning;
+
+
+
+
+
+

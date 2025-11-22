@@ -6,7 +6,7 @@
   padding: 16px;
   margin-top: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 2px solid #2196f3;
+  border: 2px solid #2196F3;
 }
 
 .alternatives-header {
@@ -16,7 +16,7 @@
 .alternatives-header h4 {
   margin: 0 0 4px 0;
   font-size: 16px;
-  color: #1976d2;
+  color: #1976D2;
 }
 
 .alternatives-hint {
@@ -49,21 +49,21 @@
 }
 
 .alternative-item.selected {
-  border-color: #2196f3;
-  background: #e3f2fd;
+  border-color: #2196F3;
+  background: #E3F2FD;
   box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
 }
 
 .alternative-item.selected.has-flood {
-  border-color: #ff9800;
-  background: #fff3e0;
+  border-color: #FF9800;
+  background: #FFF3E0;
 }
 
 .alternative-number {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #2196f3;
+  background: #2196F3;
   color: white;
   display: flex;
   align-items: center;
@@ -74,12 +74,12 @@
 }
 
 .alternative-item.selected .alternative-number {
-  background: #1976d2;
+  background: #1976D2;
   font-size: 18px;
 }
 
 .alternative-item.has-flood .alternative-number {
-  background: #ff9800;
+  background: #FF9800;
 }
 
 .alternative-info {
@@ -111,12 +111,12 @@
 }
 
 .flood-badge {
-  color: #e65100;
+  color: #E65100;
   font-weight: 600;
 }
 
 .safe-badge {
-  color: #2e7d32;
+  color: #2E7D32;
   font-weight: 600;
 }
 
@@ -126,3 +126,9 @@
   border-radius: 3px;
   flex-shrink: 0;
 }
+
+
+
+
+
+

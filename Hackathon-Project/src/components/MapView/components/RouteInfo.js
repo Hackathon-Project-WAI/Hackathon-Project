@@ -3,8 +3,8 @@
  * Component hiển thị thông tin route hiện tại
  */
 
-import React, { memo } from "react";
-import "./RouteInfo.css";
+import React, { memo } from 'react';
+import './RouteInfo.css';
 
 const RouteInfo = memo(({ routeInfo, onClear }) => {
   if (!routeInfo) return null;
@@ -13,9 +13,9 @@ const RouteInfo = memo(({ routeInfo, onClear }) => {
 
   return (
     <div className="route-info-panel">
-      <div className={`route-info-header ${safeRoute ? "safe" : "warning"}`}>
+      <div className={`route-info-header ${safeRoute ? 'safe' : 'warning'}`}>
         <h3>
-          {safeRoute ? "✅ Đường đi an toàn" : "⚠️ Cảnh báo ngập"}
+          {safeRoute ? '✅ Đường đi an toàn' : '⚠️ Cảnh báo ngập'}
           {totalRoutes > 1 && (
             <span className="route-number-badge">
               Route {routeNumber}/{totalRoutes}
@@ -41,10 +41,10 @@ const RouteInfo = memo(({ routeInfo, onClear }) => {
         </div>
 
         <div className="stat-item">
-          <span className="stat-icon">{safeRoute ? "✅" : "⚠️"}</span>
+          <span className="stat-icon">{safeRoute ? '✅' : '⚠️'}</span>
           <span className="stat-label">Trạng thái:</span>
-          <span className={`stat-value ${safeRoute ? "safe" : "danger"}`}>
-            {safeRoute ? "An toàn" : "Có ngập"}
+          <span className={`stat-value ${safeRoute ? 'safe' : 'danger'}`}>
+            {safeRoute ? 'An toàn' : 'Có ngập'}
           </span>
         </div>
       </div>
@@ -52,6 +52,12 @@ const RouteInfo = memo(({ routeInfo, onClear }) => {
   );
 });
 
-RouteInfo.displayName = "RouteInfo";
+RouteInfo.displayName = 'RouteInfo';
 
 export default RouteInfo;
+
+
+
+
+
+

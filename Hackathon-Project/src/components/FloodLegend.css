@@ -1,0 +1,111 @@
+.flood-legend {
+  position: absolute;
+  bottom: 120px;
+  left: 20px;
+  background: rgba(30, 30, 50, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 100;
+  min-width: 200px;
+  animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.flood-legend-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.legend-icon {
+  font-size: 1.2rem;
+}
+
+.legend-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.flood-legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.flood-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.flood-color-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.flood-legend-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.flood-level {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.flood-description {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .flood-legend {
+    bottom: 100px;
+    left: 10px;
+    padding: 0.8rem;
+    min-width: 180px;
+  }
+
+  .legend-title {
+    font-size: 0.8rem;
+  }
+
+  .flood-color-box {
+    width: 20px;
+    height: 20px;
+  }
+
+  .flood-level {
+    font-size: 0.8rem;
+  }
+
+  .flood-description {
+    font-size: 0.7rem;
+  }
+}

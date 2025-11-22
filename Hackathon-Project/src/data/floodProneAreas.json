@@ -8,6 +8,7 @@
         "lat": 16.0678,
         "lng": 108.2208
       },
+      "radius": 400,
       "riskLevel": "high",
       "rainThreshold": {
         "yellow": 30,
@@ -30,6 +31,7 @@
         "lat": 16.0741,
         "lng": 108.2221
       },
+      "radius": 350,
       "riskLevel": "high",
       "rainThreshold": {
         "yellow": 35,
@@ -52,6 +54,7 @@
         "lat": 16.0417,
         "lng": 108.2492
       },
+      "radius": 500,
       "riskLevel": "medium",
       "rainThreshold": {
         "yellow": 40,
@@ -74,6 +77,7 @@
         "lat": 16.0647,
         "lng": 108.1961
       },
+      "radius": 300,
       "riskLevel": "medium",
       "rainThreshold": {
         "yellow": 35,
@@ -96,6 +100,7 @@
         "lat": 16.0611,
         "lng": 108.2273
       },
+      "radius": 450,
       "riskLevel": "high",
       "rainThreshold": {
         "yellow": 25,
@@ -118,6 +123,7 @@
         "lat": 16.0583,
         "lng": 108.2139
       },
+      "radius": 250,
       "riskLevel": "medium",
       "rainThreshold": {
         "yellow": 40,
@@ -140,6 +146,7 @@
         "lat": 16.0831,
         "lng": 108.2192
       },
+      "radius": 400,
       "riskLevel": "high",
       "rainThreshold": {
         "yellow": 30,
@@ -162,6 +169,7 @@
         "lat": 16.0789,
         "lng": 108.2156
       },
+      "radius": 350,
       "riskLevel": "medium",
       "rainThreshold": {
         "yellow": 45,
@@ -184,6 +192,7 @@
         "lat": 16.0697,
         "lng": 108.2331
       },
+      "radius": 500,
       "riskLevel": "high",
       "rainThreshold": {
         "yellow": 20,
@@ -206,6 +215,7 @@
         "lat": 16.0556,
         "lng": 108.2267
       },
+      "radius": 300,
       "riskLevel": "medium",
       "rainThreshold": {
         "yellow": 35,

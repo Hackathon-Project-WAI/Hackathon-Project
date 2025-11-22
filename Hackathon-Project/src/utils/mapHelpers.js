@@ -3,7 +3,7 @@
  * Các hàm tiện ích cho HERE Maps
  */
 
-import { RISK_COLORS } from './routeConstants';
+import { RISK_COLORS } from "./routeConstants";
 
 /**
  * Tạo marker cho user location
@@ -12,23 +12,43 @@ import { RISK_COLORS } from './routeConstants';
  * @returns {H.map.DomMarker} Marker object
  */
 export const createUserLocationMarker = (lat, lng) => {
-  if (!window.H || typeof lat !== 'number' || typeof lng !== 'number') return null;
+  if (!window.H || typeof lat !== "number" || typeof lng !== "number")
+    return null;
 
   const markerHTML = `
     <div style="
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-      border: 4px solid white;
-      border-radius: 50%;
-      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      animation: pulse 2s infinite;
+      gap: 8px;
+      transform: translate(-50%, -100%);
     ">
-      📍
+      <div style="
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        border: 4px solid white;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        animation: pulse 2s infinite;
+      ">
+        📍
+      </div>
+      <div style="
+        background: rgba(33, 150, 243, 0.95);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      ">
+        Vị trí của bạn
+      </div>
     </div>
     <style>
       @keyframes pulse {
@@ -40,7 +60,9 @@ export const createUserLocationMarker = (lat, lng) => {
 
   const icon = new window.H.map.DomIcon(markerHTML);
   const position = new window.H.geo.Point(lat, lng);
-  return new window.H.map.DomMarker(position, { icon });
+  const marker = new window.H.map.DomMarker(position, { icon });
+  marker.setZIndex(9999); // Đảm bảo marker luôn ở trên cùng
+  return marker;
 };
 
 /**
@@ -50,12 +72,13 @@ export const createUserLocationMarker = (lat, lng) => {
  * @param {string} type - 'start' hoặc 'end'
  * @returns {H.map.DomMarker} Marker object
  */
-export const createRouteMarker = (lat, lng, type = 'start') => {
-  if (!window.H || typeof lat !== 'number' || typeof lng !== 'number') return null;
+export const createRouteMarker = (lat, lng, type = "start") => {
+  if (!window.H || typeof lat !== "number" || typeof lng !== "number")
+    return null;
 
-  const isStart = type === 'start';
-  const color = isStart ? '#4CAF50' : '#F44336';
-  const label = isStart ? 'A' : 'B';
+  const isStart = type === "start";
+  const color = isStart ? "#4CAF50" : "#F44336";
+  const label = isStart ? "A" : "B";
 
   const markerHTML = `
     <div style="
@@ -89,7 +112,8 @@ export const createRouteMarker = (lat, lng, type = 'start') => {
  * @returns {H.map.Marker} Marker object
  */
 export const createPlaceMarker = (lat, lng, name) => {
-  if (!window.H || typeof lat !== 'number' || typeof lng !== 'number') return null;
+  if (!window.H || typeof lat !== "number" || typeof lng !== "number")
+    return null;
 
   const icon = new window.H.map.Icon(
     `data:image/svg+xml,${encodeURIComponent(`
@@ -103,7 +127,7 @@ export const createPlaceMarker = (lat, lng, name) => {
   const position = new window.H.geo.Point(lat, lng);
   const marker = new window.H.map.Marker(position, { icon });
   marker.setData({ name });
-  
+
   return marker;
 };
 
@@ -124,24 +148,26 @@ export const getRiskColors = (riskLevel) => {
  * @param {string} riskLevel - Mức độ rủi ro
  * @returns {H.map.Circle} Circle object
  */
-export const createFloodZoneCircle = (lat, lng, radius, riskLevel = 'medium') => {
-  if (!window.H || typeof lat !== 'number' || typeof lng !== 'number') return null;
+export const createFloodZoneCircle = (
+  lat,
+  lng,
+  radius,
+  riskLevel = "medium"
+) => {
+  if (!window.H || typeof lat !== "number" || typeof lng !== "number")
+    return null;
 
   const colors = getRiskColors(riskLevel);
   const center = new window.H.geo.Point(lat, lng);
-  
-  return new window.H.map.Circle(
-    center,
-    radius,
-    {
-      style: {
-        strokeColor: colors.stroke,
-        lineWidth: 2,
-        fillColor: colors.fill,
-      },
-      volatility: true,
-    }
-  );
+
+  return new window.H.map.Circle(center, radius, {
+    style: {
+      strokeColor: colors.stroke,
+      lineWidth: 2,
+      fillColor: colors.fill,
+    },
+    volatility: true,
+  });
 };
 
 /**
@@ -158,7 +184,7 @@ export const createInfoBubble = (map, position, content) => {
   const bubble = new window.H.ui.InfoBubble(position, {
     content,
   });
-  
+
   ui.addBubble(bubble);
   return bubble;
 };
@@ -170,11 +196,11 @@ export const createInfoBubble = (map, position, content) => {
  */
 export const formatFloodInfoBubble = (zoneData) => {
   const { name, district, riskLevel, description, rainThreshold } = zoneData;
-  
+
   const riskLabels = {
-    high: '🔴 Nguy hiểm cao',
-    medium: '🟡 Nguy hiểm trung bình',
-    low: '🟢 Nguy hiểm thấp',
+    high: "🔴 Nguy hiểm cao",
+    medium: "🟡 Nguy hiểm trung bình",
+    low: "🟢 Nguy hiểm thấp",
   };
 
   return `
@@ -189,12 +215,18 @@ export const formatFloodInfoBubble = (zoneData) => {
       <div class="bubble-risk">
         <strong>Mức độ:</strong> ${riskLabels[riskLevel] || riskLabels.medium}
       </div>
-      ${description ? `
+      ${
+        description
+          ? `
         <div class="bubble-description">
           ${description}
         </div>
-      ` : ''}
-      ${rainThreshold ? `
+      `
+          : ""
+      }
+      ${
+        rainThreshold
+          ? `
         <div class="bubble-threshold">
           <p>⚠️ Ngưỡng mưa cảnh báo:</p>
           <ul>
@@ -203,7 +235,9 @@ export const formatFloodInfoBubble = (zoneData) => {
             <li>🔴 Đỏ: ${rainThreshold.red || 80}mm/3h</li>
           </ul>
         </div>
-      ` : ''}
+      `
+          : ""
+      }
     </div>
   `;
 };
@@ -232,5 +266,3 @@ export const clearGroup = (group) => {
 
   group.removeAll();
 };
-
-
