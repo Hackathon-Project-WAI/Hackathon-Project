@@ -87,32 +87,50 @@ class SensorBasedAlertService {
         Math.round((sensorData.water_level_cm / 100) * 100);
 
       const waterLevelCm = sensorData.water_level_cm || 0;
+      const floodStatus = sensorData.flood_status || sensorData.status || "NORMAL";
 
       console.log(
-        `   🔍 Sensor ${sensorId}: ${distanceMeters}m, mực nước ${waterLevelCm}cm (${waterPercent}%)`
+        `   🔍 Sensor ${sensorId}: ${distanceMeters}m, mực nước ${waterLevelCm}cm (${waterPercent}%), trạng thái: ${floodStatus}`
       );
 
-      // ✅ Kiểm tra điều kiện: trong bán kính VÀ vượt ngưỡng (theo CM)
-      if (
-        distanceMeters <= alertRadius &&
-        waterLevelCm >= waterLevelThresholdCm
-      ) {
+      // ✅ Kiểm tra điều kiện: trong bán kính VÀ (vượt ngưỡng HOẶC đang cảnh báo)
+      // Nếu sensor đang cảnh báo (WARNING, DANGER, CRITICAL), gửi cảnh báo bất kể mực nước
+      const isFloodAlerting = ["WARNING", "DANGER", "CRITICAL", "ALERT"].includes(
+        floodStatus.toUpperCase()
+      );
+      const exceedsThreshold = waterLevelCm >= waterLevelThresholdCm;
+      const isInRadius = distanceMeters <= alertRadius;
+
+      if (isInRadius && (exceedsThreshold || isFloodAlerting)) {
+        const reason = isFloodAlerting
+          ? `trạng thái ${floodStatus}`
+          : `vượt ngưỡng ${waterLevelThresholdCm}cm`;
+        
         console.log(
-          `   ⚠️ CẢNH BÁO: Sensor ${sensorId} vượt ngưỡng ${waterLevelThresholdCm}cm!`
+          `   ⚠️ CẢNH BÁO: Sensor ${sensorId} ${reason}! (${distanceMeters}m, ${waterLevelCm}cm)`
         );
+        
         nearbyFloods.push({
           sensorId: sensorId,
           sensorName: sensorData.device_id || sensorId,
           distance: distanceMeters,
-          waterLevel: sensorData.water_level_cm,
+          waterLevel: waterLevelCm,
           waterPercent: waterPercent,
-          floodStatus: sensorData.flood_status || "WARNING",
+          floodStatus: floodStatus,
           coords: {
             lat: sensorData.latitude,
             lon: sensorData.longitude,
           },
           timestamp: sensorData.timestamp,
+          alertReason: reason, // Lý do cảnh báo
         });
+      } else if (isInRadius) {
+        // Log lý do không cảnh báo để debug
+        console.log(
+          `   ⏭️ Sensor ${sensorId} trong bán kính nhưng không cảnh báo: ` +
+          `mực nước ${waterLevelCm}cm < ${waterLevelThresholdCm}cm, ` +
+          `trạng thái ${floodStatus}`
+        );
       }
     }
 
