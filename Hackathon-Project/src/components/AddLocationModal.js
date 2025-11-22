@@ -1,10 +1,11 @@
 /**
  * AddLocationModal Component
- * Modal để thêm địa điểm mới
+ * Modal để thêm địa điểm mới với HERE Maps Autocomplete
  */
 
-import React, { useState } from "react";
-import { X } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { X, MapPin } from "lucide-react";
+import { useHereSearch } from "../hooks/useHereSearch";
 import "./AddLocationModal.css";
 
 const AddLocationModal = ({ isOpen, onClose, onAdd }) => {
@@ -17,6 +18,19 @@ const AddLocationModal = ({ isOpen, onClose, onAdd }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [addressQuery, setAddressQuery] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const addressInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+
+  // Get API Key from environment
+  const API_KEY = process.env.REACT_APP_HERE_API_KEY || "";
+
+  // Use HERE Maps search hook
+  const { suggestions, autocomplete, lookup, clearSuggestions } =
+    useHereSearch(API_KEY);
 
   const locationTypes = [
     { icon: "🏠", label: "Nhà", value: "home" },
@@ -37,6 +51,65 @@ const AddLocationModal = ({ isOpen, onClose, onAdd }) => {
     { value: "low", label: "Thấp", color: "#95a5a6" },
   ];
 
+  // Handle address input change
+  const handleAddressChange = (value) => {
+    console.log("🔍 Address input changed:", value);
+    setAddressQuery(value);
+    setFormData({ ...formData, address: value });
+    setSelectedLocation(null);
+
+    if (value.length >= 2) {
+      console.log("🔎 Calling autocomplete for:", value);
+      autocomplete(value, { lat: 16.0544, lng: 108.2022 }); // Đà Nẵng center
+      setShowSuggestions(true);
+    } else {
+      clearSuggestions();
+      setShowSuggestions(false);
+    }
+  };
+
+  // Debug: Log suggestions changes
+  useEffect(() => {
+    console.log("📋 Suggestions updated:", suggestions.length, suggestions);
+    console.log("👁️ Show suggestions:", showSuggestions);
+  }, [suggestions, showSuggestions]);
+
+  // Handle suggestion select
+  const handleSelectSuggestion = async (suggestion) => {
+    console.log("📍 Selected suggestion:", suggestion);
+
+    let position = suggestion.position;
+
+    // If no position, lookup by locationId
+    if (!position && suggestion.locationId) {
+      const lookupResult = await lookup(suggestion.locationId);
+      if (lookupResult) {
+        position = { lat: lookupResult.lat, lng: lookupResult.lng };
+      }
+    }
+
+    if (!position) {
+      alert("Không thể lấy tọa độ cho địa điểm này");
+      return;
+    }
+
+    // Update form data
+    setAddressQuery(suggestion.title);
+    setFormData({
+      ...formData,
+      address: suggestion.address || suggestion.title,
+      name: formData.name || suggestion.title, // Auto-fill name if empty
+    });
+    setSelectedLocation({
+      lat: position.lat,
+      lng: position.lng,
+      address: suggestion.address || suggestion.title,
+    });
+
+    clearSuggestions();
+    setShowSuggestions(false);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -48,6 +121,9 @@ const AddLocationModal = ({ isOpen, onClose, onAdd }) => {
     if (!formData.address.trim()) {
       newErrors.address = "Vui lòng nhập địa chỉ";
     }
+    if (!selectedLocation) {
+      newErrors.address = "Vui lòng chọn địa chỉ từ danh sách gợi ý";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -56,7 +132,7 @@ const AddLocationModal = ({ isOpen, onClose, onAdd }) => {
 
     const location = {
       ...formData,
-      coords: {
+      coords: selectedLocation || {
         lat: 16.0544,
         lng: 108.2022,
       },
@@ -75,9 +151,30 @@ const AddLocationModal = ({ isOpen, onClose, onAdd }) => {
       alertRadius: 1000,
       priority: "high",
     });
+    setAddressQuery("");
+    setSelectedLocation(null);
     setErrors({});
+    clearSuggestions();
+    setShowSuggestions(false);
     onClose();
   };
+
+  // Click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        addressInputRef.current &&
+        !addressInputRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -111,22 +208,82 @@ const AddLocationModal = ({ isOpen, onClose, onAdd }) => {
             )}
           </div>
 
-          {/* Địa chỉ */}
+          {/* Địa chỉ với HERE Maps Autocomplete */}
           <div className="form-group">
             <label>
               Địa chỉ <span className="required">*</span>
             </label>
-            <input
-              type="text"
-              placeholder="VD: 123 Nguyễn Tri Phương, Hải Châu, Đà Nẵng"
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              className={errors.address ? "error" : ""}
-            />
-            {errors.address && (
-              <span className="error-message">{errors.address}</span>
+            <div className="address-input-wrapper">
+              <input
+                ref={addressInputRef}
+                type="text"
+                placeholder="Nhập địa chỉ hoặc chọn trên bản đồ"
+                value={addressQuery}
+                onChange={(e) => handleAddressChange(e.target.value)}
+                onFocus={() => {
+                  if (addressQuery.length >= 2) {
+                    autocomplete(addressQuery, { lat: 16.0544, lng: 108.2022 });
+                    setShowSuggestions(true);
+                  }
+                }}
+                className={errors.address ? "error" : ""}
+              />
+              {errors.address && (
+                <span className="error-message">{errors.address}</span>
+              )}
+
+              {/* Suggestions Dropdown - Debug */}
+              {console.log("🎯 Render check:", {
+                showSuggestions,
+                suggestionsCount: suggestions.length,
+              })}
+
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="suggestions-dropdown" ref={suggestionsRef}>
+                  {console.log(
+                    "✅ Rendering suggestions dropdown with",
+                    suggestions.length,
+                    "items"
+                  )}
+                  {suggestions.map((suggestion, index) => (
+                    <div
+                      key={suggestion.id || index}
+                      className="suggestion-item"
+                      onClick={() => handleSelectSuggestion(suggestion)}
+                    >
+                      <div className="suggestion-icon">
+                        <MapPin size={16} />
+                      </div>
+                      <div className="suggestion-content">
+                        <div className="suggestion-title">
+                          {suggestion.title}
+                        </div>
+                        {suggestion.address && (
+                          <div className="suggestion-address">
+                            {suggestion.address}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showSuggestions &&
+                suggestions.length === 0 &&
+                addressQuery.length >= 2 && (
+                  <div className="suggestions-dropdown" ref={suggestionsRef}>
+                    <div className="suggestions-empty">
+                      Không tìm thấy địa điểm
+                    </div>
+                  </div>
+                )}
+            </div>
+
+            {selectedLocation && (
+              <div className="selected-location-info">
+                ✅ Đã chọn: {selectedLocation.address}
+              </div>
             )}
           </div>
 

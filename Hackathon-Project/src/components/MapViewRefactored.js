@@ -62,8 +62,12 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     screenToGeo,
   } = useHereMap(apiKey, mapRef);
 
-  const { userLocation, locationPermission, requestLocation } =
-    useGeolocation();
+  const {
+    userLocation,
+    locationPermission,
+    requestLocation,
+    requestLocationWithHERE,
+  } = useGeolocation(apiKey); // ✨ Pass API key to enable HERE Positioning API
 
   const {
     routeStart,
@@ -252,7 +256,8 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
                 position: { lat: userLocation.lat, lng: userLocation.lng },
                 zoom: MAP_CONFIG.userLocationZoom,
               },
-              true // animate
+              true, // animate
+              MAP_CONFIG.animationDuration // Thời gian animation (ms)
             );
             console.log("✅ Map centered successfully");
           } else {
@@ -598,7 +603,8 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
                   position: { lat: userLocation.lat, lng: userLocation.lng },
                   zoom: MAP_CONFIG.userLocationZoom,
                 },
-                true
+                true,
+                MAP_CONFIG.animationDuration
               );
               // Set làm điểm xuất phát nếu đang ở routing mode
               if (routingMode) {
@@ -607,19 +613,22 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
               }
             }
           } else {
-            // Yêu cầu quyền truy cập vị trí
-            console.log("📡 Requesting location...");
+            // Yêu cầu quyền truy cập vị trí - Dùng HERE Positioning API
+            console.log("🗺️ Requesting location with HERE API...");
             setIsLocatingUser(true); // Bắt đầu loading
-            requestLocation()
+
+            // TRY HERE API FIRST (độ chính xác cao hơn)
+            requestLocationWithHERE()
               .then((location) => {
-                console.log("✅ Got location:", location);
+                console.log("✅ Got location from HERE API:", location);
                 if (map) {
                   map.getViewModel().setLookAtData(
                     {
                       position: { lat: location.lat, lng: location.lng },
                       zoom: MAP_CONFIG.userLocationZoom,
                     },
-                    true
+                    true,
+                    MAP_CONFIG.animationDuration
                   );
                   // Set làm điểm xuất phát nếu đang ở routing mode
                   if (routingMode) {
@@ -630,11 +639,39 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
                 setIsLocatingUser(false); // Kết thúc loading
               })
               .catch((error) => {
-                console.error("❌ Error:", error);
-                setIsLocatingUser(false); // Kết thúc loading
-                alert(
-                  "Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí."
+                console.warn(
+                  "⚠️ HERE API failed, trying browser geolocation:",
+                  error
                 );
+                // Fallback to browser geolocation nếu HERE API fail
+                requestLocation()
+                  .then((location) => {
+                    console.log("✅ Got location from browser:", location);
+                    if (map) {
+                      map.getViewModel().setLookAtData(
+                        {
+                          position: { lat: location.lat, lng: location.lng },
+                          zoom: MAP_CONFIG.userLocationZoom,
+                        },
+                        true,
+                        MAP_CONFIG.animationDuration
+                      );
+                      if (routingMode) {
+                        setRouteStart(location);
+                      }
+                    }
+                    setIsLocatingUser(false);
+                  })
+                  .catch((error) => {
+                    console.error(
+                      "❌ Both HERE API and browser failed:",
+                      error
+                    );
+                    setIsLocatingUser(false);
+                    alert(
+                      "Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí."
+                    );
+                  });
               });
           }
         }}

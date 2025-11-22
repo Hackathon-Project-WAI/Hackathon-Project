@@ -43,7 +43,8 @@ export const RISK_COLORS = {
 export const MAP_CONFIG = {
   defaultCenter: { lat: 16.0544, lng: 108.2022 }, // Đà Nẵng
   defaultZoom: 12,
-  userLocationZoom: 18, // Zoom gần hơn để thấy rõ vị trí (tăng từ 16 lên 18)
+  userLocationZoom: 17, // Zoom rất gần để thấy chi tiết vị trí (tăng từ 18 lên 19)
+  animationDuration: 1500, // Thời gian animation zoom (ms) - tăng từ mặc định lên 1.5s
   routeLineWidth: {
     selected: 8,
     unselected: 5,
@@ -116,9 +117,9 @@ export const TRANSPORT_MODES = {
  * Geolocation Configuration
  */
 export const GEOLOCATION_CONFIG = {
-  enableHighAccuracy: true,
-  timeout: 10000,
-  maximumAge: 0,
+  enableHighAccuracy: true, // Bật GPS độ chính xác cao
+  timeout: 30000, // Tăng timeout lên 30 giây để đợi GPS
+  maximumAge: 0, // Không dùng cache - luôn lấy vị trí mới
 };
 
 /**
