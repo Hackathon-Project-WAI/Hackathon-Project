@@ -3,12 +3,14 @@
  * Hook để quản lý geolocation
  */
 
-import { useState, useCallback } from 'react';
-import { GEOLOCATION_CONFIG, PERMISSION_STATES } from '../utils/routeConstants';
+import { useState, useCallback } from "react";
+import { GEOLOCATION_CONFIG, PERMISSION_STATES } from "../utils/routeConstants";
 
 export const useGeolocation = () => {
   const [userLocation, setUserLocation] = useState(null);
-  const [locationPermission, setLocationPermission] = useState(PERMISSION_STATES.PROMPT);
+  const [locationPermission, setLocationPermission] = useState(
+    PERMISSION_STATES.PROMPT
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,14 +19,14 @@ export const useGeolocation = () => {
    */
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setError('Trình duyệt không hỗ trợ Geolocation!');
+      setError("Trình duyệt không hỗ trợ Geolocation!");
       setLocationPermission(PERMISSION_STATES.DENIED);
-      return Promise.reject(new Error('Geolocation not supported'));
+      return Promise.reject(new Error("Geolocation not supported"));
     }
 
     setLoading(true);
     setError(null);
-    console.log('📍 Đang yêu cầu vị trí người dùng...');
+    console.log("📍 Đang yêu cầu vị trí người dùng...");
 
     return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
@@ -39,27 +41,27 @@ export const useGeolocation = () => {
           setLocationPermission(PERMISSION_STATES.GRANTED);
           setLoading(false);
 
-          console.log('✅ Vị trí người dùng:', userPos);
+          console.log("✅ Vị trí người dùng:", userPos);
           resolve(userPos);
         },
         (err) => {
-          console.error('❌ Lỗi geolocation:', err);
+          console.error("❌ Lỗi geolocation:", err);
           setLocationPermission(PERMISSION_STATES.DENIED);
           setLoading(false);
 
-          let message = 'Không thể lấy vị trí của bạn. ';
+          let message = "Không thể lấy vị trí của bạn. ";
           switch (err.code) {
             case err.PERMISSION_DENIED:
-              message += 'Bạn đã từ chối chia sẻ vị trí.';
+              message += "Bạn đã từ chối chia sẻ vị trí.";
               break;
             case err.POSITION_UNAVAILABLE:
-              message += 'Thông tin vị trí không khả dụng.';
+              message += "Thông tin vị trí không khả dụng.";
               break;
             case err.TIMEOUT:
-              message += 'Timeout khi lấy vị trí.';
+              message += "Timeout khi lấy vị trí.";
               break;
             default:
-              message += 'Lỗi không xác định.';
+              message += "Lỗi không xác định.";
           }
 
           setError(message);
@@ -94,7 +96,7 @@ export const useGeolocation = () => {
         }
       },
       (err) => {
-        console.error('❌ Watch location error:', err);
+        console.error("❌ Watch location error:", err);
         setLocationPermission(PERMISSION_STATES.DENIED);
       },
       GEOLOCATION_CONFIG
@@ -125,9 +127,3 @@ export const useGeolocation = () => {
     resetLocation,
   };
 };
-
-
-
-
-
-
