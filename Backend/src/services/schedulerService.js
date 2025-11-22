@@ -1,0 +1,321 @@
+const alertSettingsService = require("./alertSettingsService");
+const firebaseClient = require("../integrations/firebaseClient");
+const emailService = require("../email/emailService");
+const geminiClient = require("../integrations/geminiClient");
+
+/**
+ * Service tự động check dữ liệu sensor và gửi cảnh báo định kỳ
+ */
+class SchedulerService {
+  constructor() {
+    this.intervals = new Map(); // Map<userId, intervalId>
+    this.isRunning = false;
+  }
+
+  /**
+   * Khởi động scheduler cho TẤT CẢ users có bật cảnh báo
+   */
+  async start() {
+    if (this.isRunning) {
+      console.log("⚠️ Scheduler đã chạy rồi");
+      return;
+    }
+
+    this.isRunning = true;
+    console.log("🕐 Scheduler Service đang khởi động...");
+
+    // Lấy danh sách users có bật cảnh báo
+    const enabledUsers = await alertSettingsService.getAllEnabledUsers();
+
+    if (enabledUsers.length === 0) {
+      console.log("ℹ️ Chưa có user nào bật cảnh báo tự động");
+      return;
+    }
+
+    // Tạo interval cho từng user
+    for (const user of enabledUsers) {
+      this.startUserScheduler(user.userId, user.settings);
+    }
+
+    console.log(
+      `✅ Scheduler đã khởi động cho ${enabledUsers.length} users`
+    );
+  }
+
+  /**
+   * Dừng scheduler
+   */
+  stop() {
+    if (!this.isRunning) {
+      return;
+    }
+
+    // Clear tất cả intervals
+    for (const [userId, intervalId] of this.intervals.entries()) {
+      clearInterval(intervalId);
+      console.log(`⏹️ Đã dừng scheduler cho user ${userId}`);
+    }
+
+    this.intervals.clear();
+    this.isRunning = false;
+    console.log("⏹️ Scheduler Service đã dừng");
+  }
+
+  /**
+   * Khởi động scheduler cho 1 user
+   * @param {string} userId - ID của user
+   * @param {Object} settings - Cấu hình cảnh báo
+   */
+  startUserScheduler(userId, settings) {
+    // Nếu đã có interval, clear nó trước
+    if (this.intervals.has(userId)) {
+      clearInterval(this.intervals.get(userId));
+    }
+
+    const { checkInterval, sensorIds, threshold, email } = settings;
+
+    console.log(
+      `⏰ Khởi động scheduler cho user ${userId} - Check mỗi ${
+        checkInterval / 1000
+      }s`
+    );
+
+    // Tạo interval mới
+    const intervalId = setInterval(async () => {
+      try {
+        await this.checkAndAlert(userId, sensorIds, threshold, email);
+      } catch (error) {
+        console.error(`❌ Lỗi khi check cho user ${userId}:`, error);
+      }
+    }, checkInterval);
+
+    this.intervals.set(userId, intervalId);
+
+    // Chạy check ngay lần đầu
+    this.checkAndAlert(userId, sensorIds, threshold, email);
+  }
+
+  /**
+   * Dừng scheduler cho 1 user
+   * @param {string} userId - ID của user
+   */
+  stopUserScheduler(userId) {
+    if (this.intervals.has(userId)) {
+      clearInterval(this.intervals.get(userId));
+      this.intervals.delete(userId);
+      console.log(`⏹️ Đã dừng scheduler cho user ${userId}`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Restart scheduler cho 1 user (sau khi update settings)
+   * @param {string} userId - ID của user
+   */
+  async restartUserScheduler(userId) {
+    // Dừng scheduler hiện tại
+    this.stopUserScheduler(userId);
+
+    // Lấy settings mới
+    const settings = await alertSettingsService.getAlertSettings(userId);
+
+    // Nếu enabled, start lại
+    if (settings.enabled) {
+      this.startUserScheduler(userId, settings);
+    }
+  }
+
+  /**
+   * Check dữ liệu sensor và gửi cảnh báo nếu cần
+   * @param {string} userId - ID của user
+   * @param {Array} sensorIds - Danh sách sensor IDs
+   * @param {number} threshold - Ngưỡng cảnh báo (%)
+   * @param {string} email - Email nhận cảnh báo
+   */
+  async checkAndAlert(userId, sensorIds, threshold, email) {
+    try {
+      console.log(`🔍 Checking sensors cho user ${userId}...`);
+
+      // Cập nhật lastChecked
+      await alertSettingsService.updateLastChecked(userId);
+
+      // Nếu không có sensor IDs, bỏ qua
+      if (!sensorIds || sensorIds.length === 0) {
+        console.log(`⚠️ User ${userId} chưa cấu hình sensor IDs`);
+        return;
+      }
+
+      // Check từng sensor
+      for (const sensorId of sensorIds) {
+        const sensorData = await this.getSensorData(sensorId);
+
+        if (!sensorData) {
+          console.log(`⚠️ Không tìm thấy dữ liệu cho sensor ${sensorId}`);
+          continue;
+        }
+
+        // Tính current_percent
+        const currentPercent = this.calculatePercent(sensorData);
+
+        console.log(
+          `📊 Sensor ${sensorId}: ${currentPercent}% (ngưỡng: ${threshold}%)`
+        );
+
+        // Nếu vượt ngưỡng, gửi cảnh báo
+        if (currentPercent >= threshold) {
+          console.log(
+            `🚨 CẢNH BÁO: Sensor ${sensorId} vượt ngưỡng! (${currentPercent}% >= ${threshold}%)`
+          );
+
+          await this.sendAlert(userId, sensorId, sensorData, currentPercent, email);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Lỗi check and alert cho user ${userId}:`, error);
+    }
+  }
+
+  /**
+   * Lấy dữ liệu sensor từ Firebase
+   * @param {string} sensorId - ID của sensor
+   * @returns {Promise<Object|null>} Dữ liệu sensor
+   */
+  async getSensorData(sensorId) {
+    try {
+      // Thử lấy từ iotData trước
+      let data = await firebaseClient.readData(`iotData/${sensorId}`);
+      
+      if (data) {
+        return {
+          source: "iotData",
+          ...data,
+        };
+      }
+
+      // Nếu không có, thử sensors/flood
+      data = await firebaseClient.readData(`sensors/flood/${sensorId}`);
+      
+      if (data) {
+        return {
+          source: "sensors/flood",
+          ...data,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`Lỗi lấy dữ liệu sensor ${sensorId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Tính phần trăm mực nước từ dữ liệu sensor
+   * @param {Object} sensorData - Dữ liệu sensor
+   * @returns {number} Phần trăm (0-100)
+   */
+  calculatePercent(sensorData) {
+    // Nếu có sẵn current_percent
+    if (sensorData.current_percent !== undefined) {
+      return sensorData.current_percent;
+    }
+
+    // Nếu có water_level_cm, tính từ đó
+    if (sensorData.water_level_cm !== undefined) {
+      const maxWaterLevel = 100; // cm
+      return Math.round((sensorData.water_level_cm / maxWaterLevel) * 100);
+    }
+
+    // Mặc định
+    return 0;
+  }
+
+  /**
+   * Gửi email cảnh báo
+   * @param {string} userId - ID của user
+   * @param {string} sensorId - ID của sensor
+   * @param {Object} sensorData - Dữ liệu sensor
+   * @param {number} currentPercent - Phần trăm hiện tại
+   * @param {string} email - Email nhận
+   */
+  async sendAlert(userId, sensorId, sensorData, currentPercent, email) {
+    try {
+      // Tạo cảnh báo bằng AI
+      const alertData = {
+        ...sensorData,
+        current_percent: currentPercent,
+        sensorId: sensorId,
+        location: sensorData.location || `Sensor ${sensorId}`,
+      };
+
+      const generatedAlert = await geminiClient.generateFloodAlert(alertData);
+
+      // Gửi email
+      if (email) {
+        const emailResult = await emailService.sendAIFloodAlert(
+          email,
+          generatedAlert
+        );
+
+        if (emailResult.success) {
+          console.log(`✉️ Đã gửi email cảnh báo tới ${email}`);
+
+          // Cập nhật lastAlertSent
+          await alertSettingsService.updateLastAlertSent(userId);
+
+          // Lưu log vào Firebase
+          await this.saveAlertLog(userId, sensorId, alertData, generatedAlert);
+        } else {
+          console.error(`❌ Lỗi gửi email tới ${email}:`, emailResult.error);
+        }
+      } else {
+        console.log(`⚠️ User ${userId} chưa cấu hình email`);
+      }
+    } catch (error) {
+      console.error(`❌ Lỗi gửi alert cho user ${userId}:`, error);
+    }
+  }
+
+  /**
+   * Lưu log cảnh báo vào Firebase
+   * @param {string} userId - ID của user
+   * @param {string} sensorId - ID của sensor
+   * @param {Object} sensorData - Dữ liệu sensor
+   * @param {Object} generatedAlert - Cảnh báo đã tạo
+   */
+  async saveAlertLog(userId, sensorId, sensorData, generatedAlert) {
+    try {
+      const db = require("firebase-admin").database();
+      const alertRef = db.ref(`userSettings/${userId}/alertLogs`).push();
+
+      await alertRef.set({
+        sensorId: sensorId,
+        sensorData: sensorData,
+        alert: generatedAlert,
+        sentAt: Date.now(),
+        createdAt: Date.now(),
+      });
+
+      console.log(`💾 Đã lưu alert log cho user ${userId}`);
+    } catch (error) {
+      console.error(`❌ Lỗi lưu alert log:`, error);
+    }
+  }
+
+  /**
+   * Lấy trạng thái scheduler
+   * @returns {Object} Trạng thái
+   */
+  getStatus() {
+    return {
+      isRunning: this.isRunning,
+      totalUsers: this.intervals.size,
+      users: Array.from(this.intervals.keys()),
+    };
+  }
+}
+
+module.exports = new SchedulerService();
+
+
