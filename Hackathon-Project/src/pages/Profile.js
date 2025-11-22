@@ -405,6 +405,30 @@ const ProfilePage = () => {
         description: `Đã lưu địa điểm mới vào danh sách theo dõi`,
       });
 
+      // ✅ Tự động check alert ngay sau khi thêm location mới
+      try {
+        console.log("🔍 Đang kiểm tra cảnh báo cho location mới...");
+        const { personalizedAlertApi } = await import(
+          "../api/personalizedAlertApi"
+        );
+        const checkResult = await personalizedAlertApi.checkSensorBasedAlert(
+          user.uid,
+          true // sendEmail
+        );
+
+        if (checkResult.affectedLocations > 0) {
+          console.log(
+            `⚠️ Phát hiện ${checkResult.affectedLocations} cảnh báo từ sensors!`
+          );
+          // Không hiển thị alert ở đây vì đã gửi email/telegram rồi
+        } else {
+          console.log("✅ Location mới an toàn - không có cảnh báo");
+        }
+      } catch (checkError) {
+        console.error("❌ Lỗi kiểm tra cảnh báo:", checkError);
+        // Không block user nếu check thất bại
+      }
+
       loadLocations();
       loadUserProfile(user.uid);
       setShowAddModal(false);
