@@ -204,6 +204,16 @@ export const useRouting = (getRoutingService, floodZones) => {
             // Select best route (ưu tiên ít ngập nhất)
             let bestRoute = selectBestRoute(analyzedRoutes);
 
+            // Kiểm tra nếu không tìm được route an toàn
+            if (!bestRoute) {
+              console.error("❌ Không tìm được route an toàn nào (tất cả đều đi qua vùng ngập)");
+              setLoading(false);
+              setError("Không tìm được đường an toàn. Tất cả các tuyến đường đều đi qua vùng ngập lụt.");
+              setAllRoutes(analyzedRoutes); // Vẫn hiển thị routes không an toàn
+              reject(new Error("No safe routes available"));
+              return;
+            }
+
             // 🤖 Gemini AI: Phân tích thông minh để chọn route tốt nhất
             const processGeminiAnalysis = async () => {
               if (useGeminiSelection) {
@@ -283,12 +293,18 @@ export const useRouting = (getRoutingService, floodZones) => {
               .catch((error) => {
                 console.error("❌ Error in Gemini processing:", error);
                 // Fallback: use algorithm selection
-                setAllRoutes(analyzedRoutes);
-                setSelectedRouteIndex(bestRoute.bestIndex);
-                setRouteStart(start);
-                setRouteEnd(end);
-                setLoading(false);
-                resolve(analyzedRoutes);
+                if (bestRoute) {
+                  setAllRoutes(analyzedRoutes);
+                  setSelectedRouteIndex(bestRoute.bestIndex);
+                  setRouteStart(start);
+                  setRouteEnd(end);
+                  setLoading(false);
+                  resolve(analyzedRoutes);
+                } else {
+                  setLoading(false);
+                  setError("Không tìm được đường an toàn");
+                  reject(new Error("No safe routes available"));
+                }
               });
           })
           .catch((err) => {

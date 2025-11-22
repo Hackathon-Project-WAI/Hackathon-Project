@@ -115,6 +115,16 @@ export const checkRouteFloodIntersection = (
  * @returns {Array} Routes với thông tin flood count
  */
 export const analyzeRoutesFlood = (routes, floodZones) => {
+  console.log(`🔍 analyzeRoutesFlood: Checking ${routes.length} routes against ${floodZones.length} flood zones`);
+  console.log("🌊 Flood zones detail:", floodZones.map(z => ({
+    id: z.id,
+    name: z.name,
+    coords: z.coords,
+    radius: z.radius,
+    riskLevel: z.riskLevel,
+    type: z.type
+  })));
+
   const analyzed = routes.map((route, index) => {
     const section = route.sections[0];
     const affectedZones = checkRouteFloodIntersection(
@@ -123,6 +133,11 @@ export const analyzeRoutesFlood = (routes, floodZones) => {
     );
     const distance = section.summary.length / 1000; // km
     const duration = section.summary.duration / 60; // minutes
+
+    console.log(`📍 Route ${index + 1}: ${distance.toFixed(2)}km, ${Math.round(duration)}min → Intersects ${affectedZones.length} flood zones`);
+    if (affectedZones.length > 0) {
+      console.log(`   ⚠️ Affected zones:`, affectedZones.map(z => z.name || z.id));
+    }
 
     return {
       route,
@@ -137,6 +152,23 @@ export const analyzeRoutesFlood = (routes, floodZones) => {
 
   // Chỉ giữ lại routes AN TOÀN (không đi qua vùng ngập)
   const safeRoutes = analyzed.filter((route) => route.floodCount === 0);
+  
+  console.log(`✅ Safe routes (no flood intersections): ${safeRoutes.length}/${analyzed.length}`);
+  console.log(`⚠️ Unsafe routes (have flood intersections): ${analyzed.length - safeRoutes.length}/${analyzed.length}`);
+  
+  if (safeRoutes.length > 0) {
+    console.log("🔵 Safe routes detail:");
+    safeRoutes.forEach((r, i) => {
+      console.log(`  ${i + 1}. Original route ${r.index + 1}: ${r.distance.toFixed(2)}km, ${Math.round(r.duration)}min`);
+    });
+  }
+  
+  if (safeRoutes.length < analyzed.length) {
+    console.log("🔴 Unsafe routes detail:");
+    analyzed.filter(r => r.floodCount > 0).forEach((r, i) => {
+      console.log(`  ${i + 1}. Original route ${r.index + 1}: ${r.distance.toFixed(2)}km, ${Math.round(r.duration)}min → ${r.floodCount} zones`);
+    });
+  }
 
   // Loại bỏ routes trùng lặp (cùng duration và distance)
   const uniqueRoutes = [];
