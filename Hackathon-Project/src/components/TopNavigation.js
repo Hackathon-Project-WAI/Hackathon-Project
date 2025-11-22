@@ -48,8 +48,12 @@ const TopNavigation = ({ user, onLogout }) => {
 
   const checkTelegramLinkStatus = async () => {
     try {
+      console.log("🔍 Checking Telegram status for user:", user.uid, user.email);
+      
       const { checkTelegramStatus } = await import("../api/telegramApi");
       const response = await checkTelegramStatus(user.uid);
+
+      console.log("📥 Telegram status response:", response);
 
       if (response.success && response.data.isLinked) {
         setIsTelegramLinked(true);
@@ -58,6 +62,7 @@ const TopNavigation = ({ user, onLogout }) => {
       } else {
         setIsTelegramLinked(false);
         setTelegramUsername(null);
+        console.log("❌ Telegram chưa liên kết");
       }
     } catch (error) {
       console.error("Error checking Telegram status:", error);
