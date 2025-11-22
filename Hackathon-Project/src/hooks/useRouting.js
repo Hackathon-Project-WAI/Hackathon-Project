@@ -11,6 +11,7 @@ import {
   convertFloodZonesToAvoidAreas,
   selectFloodZonesToAvoid,
 } from "../utils/floodCalculations";
+import { analyzeRoutesWithGemini } from "../services/geminiRouteAnalyzer";
 
 export const useRouting = (getRoutingService, floodZones) => {
   const [routeStart, setRouteStart] = useState(null);
@@ -19,6 +20,8 @@ export const useRouting = (getRoutingService, floodZones) => {
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [geminiRecommendation, setGeminiRecommendation] = useState(null);
+  const [useGeminiSelection, setUseGeminiSelection] = useState(true); // Toggle Gemini AI
 
   /**
    * Current selected route info
@@ -100,61 +103,69 @@ export const useRouting = (getRoutingService, floodZones) => {
         end,
         `(${transportMode})`
       );
-      console.log("🌊 SMART Strategy: Lọc thông minh + Tránh vùng ngập");
+      console.log("🌊 STRATEGY: Gọi 2 API → Route ngắn + Route tránh ngập");
 
-      // Lọc thông minh: ưu tiên vùng ngập gần route + risk level cao
-      const zonesToAvoid = avoidFloods
-        ? selectFloodZonesToAvoid(
-            floodZones,
-            start,
-            end,
-            ROUTING_CONFIG.avoidRiskLevels,
-            ROUTING_CONFIG.maxAvoidAreas
-          )
-        : [];
+      // Chuẩn bị zones để tránh (chỉ dùng cho request 2)
+      const zonesToAvoid = selectFloodZonesToAvoid(
+        floodZones,
+        start,
+        end,
+        ROUTING_CONFIG.avoidRiskLevels,
+        ROUTING_CONFIG.maxAvoidAreas
+      );
 
-      const routingParameters = {
+      const baseParams = {
         routingMode: modeConfig.routingMode || ROUTING_CONFIG.routingMode,
         transportMode: modeConfig.apiValue || transportMode,
         origin: `${start.lat},${start.lng}`,
         destination: `${end.lat},${end.lng}`,
         return: ROUTING_CONFIG.returnValues,
-        alternatives: ROUTING_CONFIG.maxAlternatives,
+        alternatives: 3, // Mỗi loại lấy 3 routes
         spans: "names,length,duration",
       };
 
-      // Thêm avoid areas nếu có flood zones
-      if (avoidFloods && zonesToAvoid.length > 0) {
+      // 📍 REQUEST 1: Routes NGẮN NHẤT (không tránh)
+      const shortRouteParams = { ...baseParams };
+
+      // 📍 REQUEST 2: Routes TRÁNH NGẬP (có avoid)
+      const safeRouteParams = { ...baseParams };
+      if (zonesToAvoid.length > 0) {
         const avoidAreasString = convertFloodZonesToAvoidAreas(
           zonesToAvoid,
           ROUTING_CONFIG.floodBufferMeters
         );
         if (avoidAreasString) {
-          routingParameters["avoid[areas]"] = avoidAreasString;
-          console.log(
-            `🚫 Tránh ${
-              zonesToAvoid.length
-            } vùng ngập (${ROUTING_CONFIG.avoidRiskLevels.join(", ")})`
-          );
-          console.log(
-            `   Buffer: +${ROUTING_CONFIG.floodBufferMeters}m để an toàn`
-          );
+          safeRouteParams["avoid[areas]"] = avoidAreasString;
         }
-      } else {
-        console.log("ℹ️ Không tránh vùng ngập (chế độ so sánh)");
       }
 
-      console.log(
-        `📊 Yêu cầu ${ROUTING_CONFIG.maxAlternatives} routes alternatives...`
-      );
+      console.log(`📊 Gọi 2 requests: 3 routes ngắn + 3 routes an toàn...`);
 
+      // Wrap trong Promise và return
       return new Promise((resolve, reject) => {
-        router.calculateRoute(
-          routingParameters,
-          (result) => {
-            console.log("✅ Route calculated:", result);
+        // Gọi song song cả 2 requests
+        Promise.all([
+          new Promise((res, rej) =>
+            router.calculateRoute(shortRouteParams, res, rej)
+          ),
+          new Promise((res, rej) =>
+            router.calculateRoute(safeRouteParams, res, rej)
+          ),
+        ])
+          .then(([shortResult, safeResult]) => {
+            console.log("✅ Nhận routes từ 2 requests");
+            console.log(`   - Ngắn: ${shortResult.routes?.length || 0} routes`);
+            console.log(
+              `   - An toàn: ${safeResult.routes?.length || 0} routes`
+            );
 
-            if (!result.routes || result.routes.length === 0) {
+            // Merge routes từ cả 2 requests
+            const allRoutes = [
+              ...(shortResult.routes || []),
+              ...(safeResult.routes || []),
+            ];
+
+            if (allRoutes.length === 0) {
               setLoading(false);
               setError("Không tìm thấy route");
               reject(new Error("No routes found"));
@@ -162,14 +173,11 @@ export const useRouting = (getRoutingService, floodZones) => {
             }
 
             console.log(
-              `📊 Nhận được ${result.routes.length} routes alternatives`
+              `📊 Tổng: ${allRoutes.length} routes → Phân tích & sort...`
             );
 
-            // Analyze all routes for flood (kiểm tra lại để chắc chắn)
-            const analyzedRoutes = analyzeRoutesFlood(
-              result.routes,
-              floodZones
-            );
+            // Analyze all routes for flood
+            const analyzedRoutes = analyzeRoutesFlood(allRoutes, floodZones);
 
             // Log analysis với chi tiết
             console.log("🔍 Kết quả phân tích các tuyến đường:");
@@ -194,68 +202,104 @@ export const useRouting = (getRoutingService, floodZones) => {
             });
 
             // Select best route (ưu tiên ít ngập nhất)
-            const bestRoute = selectBestRoute(analyzedRoutes);
+            let bestRoute = selectBestRoute(analyzedRoutes);
 
-            if (
-              avoidFloods &&
-              bestRoute.floodCount > 0 &&
-              zonesToAvoid.length > 0
-            ) {
-              console.warn(
-                `⚠️ Mặc dù đã tránh ${zonesToAvoid.length} vùng ngập, route vẫn đi qua ${bestRoute.floodCount} vùng ngập khác!`
-              );
-              console.log(
-                "💡 Có thể là: vùng ngập mức thấp (low) hoặc route quá xa"
-              );
-            }
+            // 🤖 Gemini AI: Phân tích thông minh để chọn route tốt nhất
+            const processGeminiAnalysis = async () => {
+              if (useGeminiSelection) {
+                console.log("🤖 Bật Gemini AI Route Analyzer...");
+                try {
+                  const geminiResult = await analyzeRoutesWithGemini(
+                    analyzedRoutes,
+                    {
+                      prioritySafety: true, // Ưu tiên an toàn
+                      prioritySpeed: transportMode === "car",
+                      priorityDistance: transportMode === "pedestrian",
+                    }
+                  );
 
-            console.log(
-              `✅ Đề xuất route ${
-                bestRoute.bestIndex + 1
-              }: ${bestRoute.distance.toFixed(2)} km, ${Math.round(
-                bestRoute.duration
-              )} phút - ${
-                bestRoute.floodCount === 0
-                  ? "✅ An toàn"
-                  : `⚠️ ${bestRoute.floodCount} vùng ngập`
-              }`
-            );
+                  if (geminiResult.success) {
+                    console.log("✅ Gemini recommend:", geminiResult);
+                    setGeminiRecommendation(geminiResult);
 
-            setAllRoutes(analyzedRoutes);
-            setSelectedRouteIndex(bestRoute.bestIndex);
-            setRouteStart(start);
-            setRouteEnd(end);
-            setLoading(false);
+                    // Override bestRoute với recommendation từ Gemini
+                    bestRoute = {
+                      ...analyzedRoutes[geminiResult.recommendedIndex],
+                      bestIndex: geminiResult.recommendedIndex,
+                      aiReasoning: geminiResult.reasoning,
+                      aiSafetyScore: geminiResult.safetyScore,
+                    };
+                  } else {
+                    console.log("⚠️ Gemini failed, using algorithm selection");
+                  }
+                } catch (geminiError) {
+                  console.error("❌ Gemini error:", geminiError);
+                  console.log("🔄 Fallback to algorithm selection");
+                }
+              } else {
+                console.log("ℹ️ Gemini disabled, using algorithm selection");
+                setGeminiRecommendation(null);
+              }
 
-            resolve(analyzedRoutes);
-          },
-          (err) => {
+              return bestRoute;
+            };
+
+            // Execute Gemini analysis then finalize route
+            processGeminiAnalysis()
+              .then((finalBestRoute) => {
+                if (
+                  avoidFloods &&
+                  finalBestRoute.floodCount > 0 &&
+                  zonesToAvoid.length > 0
+                ) {
+                  console.warn(
+                    `⚠️ Mặc dù đã tránh ${zonesToAvoid.length} vùng ngập, route vẫn đi qua ${finalBestRoute.floodCount} vùng ngập khác!`
+                  );
+                  console.log(
+                    "💡 Có thể là: vùng ngập mức thấp (low) hoặc route quá xa"
+                  );
+                }
+
+                console.log(
+                  `✅ Đề xuất route ${
+                    finalBestRoute.bestIndex + 1
+                  }: ${finalBestRoute.distance.toFixed(2)} km, ${Math.round(
+                    finalBestRoute.duration
+                  )} phút - ${
+                    finalBestRoute.floodCount === 0
+                      ? "✅ An toàn"
+                      : `⚠️ ${finalBestRoute.floodCount} vùng ngập`
+                  }`
+                );
+
+                setAllRoutes(analyzedRoutes);
+                setSelectedRouteIndex(finalBestRoute.bestIndex);
+                setRouteStart(start);
+                setRouteEnd(end);
+                setLoading(false);
+
+                resolve(analyzedRoutes);
+              })
+              .catch((error) => {
+                console.error("❌ Error in Gemini processing:", error);
+                // Fallback: use algorithm selection
+                setAllRoutes(analyzedRoutes);
+                setSelectedRouteIndex(bestRoute.bestIndex);
+                setRouteStart(start);
+                setRouteEnd(end);
+                setLoading(false);
+                resolve(analyzedRoutes);
+              });
+          })
+          .catch((err) => {
             console.error("❌ Routing error:", err);
-            console.error("Error details:", err.message);
-
-            // Fallback strategy: Nếu tránh ngập thất bại, thử các phương án khác
-            if (avoidFloods && routingParameters["avoid[areas]"]) {
-              console.log(
-                "⚠️ Không thể tính route khi tránh tất cả vùng ngập!"
-              );
-              console.log(
-                "💡 Fallback: Tính route bình thường rồi chọn đường ít ngập nhất..."
-              );
-
-              // Thử lại không tránh để có ít nhất 1 route
-              calculateRoute(start, end, false).then(resolve).catch(reject);
-            } else {
-              setLoading(false);
-              setError(
-                "Không thể tính toán đường đi. Có thể không có đường đi khả thi."
-              );
-              reject(err);
-            }
-          }
-        );
-      });
+            setLoading(false);
+            setError("Không thể tính toán đường đi");
+            reject(err);
+          });
+      }); // End of outer Promise
     },
-    [getRoutingService, floodZones]
+    [getRoutingService, floodZones, useGeminiSelection]
   );
 
   /**
@@ -280,7 +324,18 @@ export const useRouting = (getRoutingService, floodZones) => {
     setAllRoutes([]);
     setSelectedRouteIndex(0);
     setError(null);
+    setGeminiRecommendation(null);
     console.log("🗑️ Routes cleared");
+  }, []);
+
+  /**
+   * Toggle Gemini AI selection
+   */
+  const toggleGeminiSelection = useCallback((enabled) => {
+    setUseGeminiSelection(enabled);
+    console.log(
+      `🤖 Gemini AI Route Selection: ${enabled ? "ENABLED" : "DISABLED"}`
+    );
   }, []);
 
   return {
@@ -293,9 +348,12 @@ export const useRouting = (getRoutingService, floodZones) => {
     routeWarning,
     loading,
     error,
+    geminiRecommendation,
+    useGeminiSelection,
     calculateRoute,
     selectRoute,
     clearRoute,
+    toggleGeminiSelection,
     setRouteStart,
     setRouteEnd,
   };

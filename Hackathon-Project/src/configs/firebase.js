@@ -9,16 +9,17 @@ import { getAnalytics } from "firebase/analytics";
 import { getDatabase } from "firebase/database";
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCyKjOpPq9UR4d1FOQvzO05v4i3C2Q9P8o",
-  authDomain: "fir-hackathon-98bf5.firebaseapp.com",
+  apiKey: "AIzaSyAjU-UIf6pjFeKboqM0wFGYTTBTXllEc_E",
+  authDomain: "hackathon-weather-634bf.firebaseapp.com",
   databaseURL:
-    "https://fir-hackathon-98bf5-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "fir-hackathon-98bf5",
-  storageBucket: "fir-hackathon-98bf5.firebasestorage.app",
-  messagingSenderId: "121314874160",
-  appId: "1:121314874160:web:1cc14e6fbe7992b103aef5",
-  measurementId: "G-TDE2Q68S40",
+    "https://hackathon-weather-634bf-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hackathon-weather-634bf",
+  storageBucket: "hackathon-weather-634bf.firebasestorage.app",
+  messagingSenderId: "571676910483",
+  appId: "1:571676910483:web:8fd3feebf30803ac19be66",
+  measurementId: "G-BNMMF9YHSP",
 };
 
 // Initialize Firebase

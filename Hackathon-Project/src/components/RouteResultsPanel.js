@@ -23,6 +23,7 @@ const RouteResultsPanel = ({
   selectedIndex,
   onSelectRoute,
   onClearRoute,
+  geminiRecommendation, // Thêm prop từ useRouting
 }) => {
   const [aiAdvice, setAiAdvice] = useState({});
   const [isAnalyzing, setIsAnalyzing] = useState({});
@@ -101,6 +102,63 @@ Trả lời bằng tiếng Việt, tối đa 50 từ, ngắn gọn và dễ hi�
         </button>
       </div>
 
+      {/* Gemini AI Recommendation Banner */}
+      {geminiRecommendation && geminiRecommendation.aiAnalyzed && (
+        <div
+          className="glass-panel"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05))",
+            border: "2px solid rgba(139, 92, 246, 0.3)",
+            padding: "12px 16px",
+            marginBottom: "12px",
+            borderRadius: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "start", gap: "10px" }}>
+            <Sparkles
+              size={18}
+              className="text-purple-600"
+              style={{ marginTop: "2px", flexShrink: 0 }}
+            />
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontWeight: "700",
+                  fontSize: "14px",
+                  color: "#7c3aed",
+                  marginBottom: "4px",
+                }}
+              >
+                🤖 Gemini AI Recommend: Tuyến{" "}
+                {geminiRecommendation.recommendedIndex + 1}
+              </div>
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "#64748b",
+                  lineHeight: "1.5",
+                }}
+              >
+                {geminiRecommendation.reasoning}
+              </div>
+              {geminiRecommendation.safetyScore > 0 && (
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#8b5cf6",
+                    marginTop: "6px",
+                    fontWeight: "600",
+                  }}
+                >
+                  🛡️ Điểm an toàn: {geminiRecommendation.safetyScore}/100
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Accordion Route Cards */}
       <div className="route-accordion-list">
         {routes.map((route, index) => {
@@ -108,12 +166,19 @@ Trả lời bằng tiếng Việt, tối đa 50 từ, ngắn gọn và dễ hi�
           const hasFlood = route.floodCount > 0;
           const hasAiAdvice = aiAdvice[index];
           const isAnalyzingRoute = isAnalyzing[index];
+          const isGeminiRecommended =
+            geminiRecommendation?.recommendedIndex === index;
+          
+          // Nếu route được Gemini gợi ý và AI đã analyzed, chỉ hiện thông tin AI
+          const showOnlyAI = isGeminiRecommended && geminiRecommendation?.aiAnalyzed;
 
           return (
             <div
               key={index}
               onClick={() => onSelectRoute(index)}
-              className={`route-accordion-card ${isSelected ? "selected" : ""}`}
+              className={`route-accordion-card ${
+                isSelected ? "selected" : ""
+              } ${isGeminiRecommended ? "gemini-recommended" : ""}`}
             >
               {/* Card Header */}
               <div className="route-card-header">
@@ -121,8 +186,20 @@ Trả lời bằng tiếng Việt, tối đa 50 từ, ngắn gọn và dễ hi�
                   <div
                     className={`route-number-circle ${
                       isSelected ? "active" : ""
-                    }`}
+                    } ${isGeminiRecommended ? "gemini-badge" : ""}`}
                   >
+                    {isGeminiRecommended && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "-6px",
+                          right: "-6px",
+                          fontSize: "14px",
+                        }}
+                      >
+                        ✨
+                      </span>
+                    )}
                     {index + 1}
                   </div>
                   <div>
@@ -134,18 +211,21 @@ Trả lời bằng tiếng Việt, tối đa 50 từ, ngắn gọn và dễ hi�
                         ({route.distance.toFixed(2)} km)
                       </span>
                     </div>
-                    <div className="route-card-status">
-                      {hasFlood ? (
-                        <span className="status-badge-warning">
-                          <AlertTriangle size={10} /> Có {route.floodCount} vùng
-                          ngập
-                        </span>
-                      ) : (
-                        <span className="status-badge-safe">
-                          <CheckCircle2 size={10} /> An toàn
-                        </span>
-                      )}
-                    </div>
+                    {/* Chỉ hiện status badge nếu không phải route AI gợi ý */}
+                    {!showOnlyAI && (
+                      <div className="route-card-status">
+                        {hasFlood ? (
+                          <span className="status-badge-warning">
+                            <AlertTriangle size={10} /> Có {route.floodCount} vùng
+                            ngập
+                          </span>
+                        ) : (
+                          <span className="status-badge-safe">
+                            <CheckCircle2 size={10} /> An toàn
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <ChevronDown

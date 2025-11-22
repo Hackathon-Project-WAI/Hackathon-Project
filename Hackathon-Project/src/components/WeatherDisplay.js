@@ -57,10 +57,10 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
     const now = Date.now();
     const futureHours = hours.filter((hour) => hour.dt * 1000 > now);
     if (futureHours.length === 0) return 0;
-    
+
     let totalRain = 0;
     const dataPoints = Math.min(limit, futureHours.length);
-    
+
     for (let i = 0; i < dataPoints; i++) {
       const hour = futureHours[i];
       if (hour.rain?.["1h"]) {
@@ -74,10 +74,14 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
   };
 
   const getRainLevel = (rainfall) => {
-    if (rainfall === 0) return { label: "Không mưa", description: "Trời khô ráo" };
-    if (rainfall < 2.5) return { label: "Mưa nhẹ", description: "Mưa phùn, có thể không cần ô" };
-    if (rainfall < 10) return { label: "Mưa vừa", description: "Nên mang theo ô" };
-    if (rainfall < 50) return { label: "Mưa to", description: "Hạn chế di chuyển" };
+    if (rainfall === 0)
+      return { label: "Không mưa", description: "Trời khô ráo" };
+    if (rainfall < 2.5)
+      return { label: "Mưa nhẹ", description: "Mưa phùn, có thể không cần ô" };
+    if (rainfall < 10)
+      return { label: "Mưa vừa", description: "Nên mang theo ô" };
+    if (rainfall < 50)
+      return { label: "Mưa to", description: "Hạn chế di chuyển" };
     return { label: "Mưa rất to", description: "Nguy hiểm ngập lụt" };
   };
 
@@ -96,7 +100,7 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <i className="fa-solid fa-triangle-exclamation text-4xl text-yellow-500 mb-4"></i>
         <p className="text-slate-600 mb-4">{error}</p>
-        <button 
+        <button
           onClick={fetchWeatherData}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
@@ -106,14 +110,15 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
     );
   }
 
-  const rainfall3h = hourlyForecast ? calculateAverageRainfall(hourlyForecast, 3) : 0;
+  const rainfall3h = hourlyForecast
+    ? calculateAverageRainfall(hourlyForecast, 3)
+    : 0;
   const rainLevel3h = getRainLevel(rainfall3h);
 
   return (
     <div className="weather-main-grid">
       {/* LEFT COLUMN */}
       <div className="weather-left-column">
-        
         {/* Top Section: Current Status + Rainfall Highlight */}
         <div className="weather-top-section">
           {/* Current Status */}
@@ -122,23 +127,29 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
               <span className="weather-badge">Hiện tại</span>
               <i className="fa-regular fa-circle-question text-slate-400 hover:text-blue-500 cursor-pointer"></i>
             </div>
-            
+
             <div className="current-temp-display">
-              <h2 className="temp-large">{Math.round(weather?.current?.temp || 0)}°</h2>
+              <h2 className="temp-large">
+                {Math.round(weather?.current?.temp || 0)}°
+              </h2>
               <div className="temp-info">
-                <p className="weather-description capitalize">{weather?.current?.weather?.[0]?.description}</p>
-                <p className="feels-like">Cảm giác như {Math.round(weather?.current?.feels_like || 0)}°C</p>
+                <p className="weather-description capitalize">
+                  {weather?.current?.weather?.[0]?.description}
+                </p>
+                <p className="feels-like">
+                  Cảm giác như {Math.round(weather?.current?.feels_like || 0)}°C
+                </p>
               </div>
             </div>
 
             <div className="weather-tags">
               <span className="weather-tag">
-                <i className="fa-solid fa-droplet text-blue-500"></i> 
-                {rainfall3h > 0 ? rainLevel3h.label : 'Không mưa'}
+                <i className="fa-solid fa-droplet text-blue-500"></i>
+                {rainfall3h > 0 ? rainLevel3h.label : "Không mưa"}
               </span>
               <span className="weather-tag">
-                <i className="fa-solid fa-wind text-cyan-500"></i> 
-                {weather?.current?.wind?.speed < 5 ? 'Gió nhẹ' : 'Gió mạnh'}
+                <i className="fa-solid fa-wind text-cyan-500"></i>
+                {weather?.current?.wind?.speed < 5 ? "Gió nhẹ" : "Gió mạnh"}
               </span>
             </div>
           </div>
@@ -165,13 +176,19 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
               <div className="rainfall-item">
                 <span className="rainfall-item-label">1h tới</span>
                 <span className="rainfall-item-value">
-                  {hourlyForecast ? calculateAverageRainfall(hourlyForecast, 1).toFixed(1) : 0} mm/h
+                  {hourlyForecast
+                    ? calculateAverageRainfall(hourlyForecast, 1).toFixed(1)
+                    : 0}{" "}
+                  mm/h
                 </span>
               </div>
               <div className="rainfall-item">
                 <span className="rainfall-item-label">12h tới</span>
                 <span className="rainfall-item-value">
-                  {hourlyForecast ? calculateAverageRainfall(hourlyForecast, 12).toFixed(1) : 0} mm/h
+                  {hourlyForecast
+                    ? calculateAverageRainfall(hourlyForecast, 12).toFixed(1)
+                    : 0}{" "}
+                  mm/h
                 </span>
               </div>
             </div>
@@ -182,12 +199,13 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
         <div className="glass-card chart-card">
           <div className="chart-header">
             <h3 className="chart-title">
-              <i className="fa-solid fa-chart-simple"></i> 
+              <i className="fa-solid fa-chart-simple"></i>
               Lượng mưa 24h tới
             </h3>
             <div className="chart-legend">
               <span className="legend-item">
-                <span className="legend-dot bg-green-400"></span> Nhẹ (&lt;2.5mm)
+                <span className="legend-dot bg-green-400"></span> Nhẹ
+                (&lt;2.5mm)
               </span>
               <span className="legend-item">
                 <span className="legend-dot bg-yellow-400"></span> Vừa
@@ -200,56 +218,69 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
 
           {/* Custom Bar Chart */}
           <div className="bar-container">
-            {hourlyForecast && hourlyForecast.slice(0, 16).map((hour, index) => {
-              // Sửa lỗi: Kiểm tra cả rain['1h'] và rain['3h']
-              let rain = 0;
-              if (hour.rain?.['1h']) {
-                rain = hour.rain['1h'];
-              } else if (hour.rain?.['3h']) {
-                rain = hour.rain['3h'] / 3; // Chia 3 để quy đổi ra lượng mưa/giờ
-              }
+            {hourlyForecast &&
+              hourlyForecast.slice(0, 16).map((hour, index) => {
+                // Sửa lỗi: Kiểm tra cả rain['1h'] và rain['3h']
+                let rain = 0;
+                if (hour.rain?.["1h"]) {
+                  rain = hour.rain["1h"];
+                } else if (hour.rain?.["3h"]) {
+                  rain = hour.rain["3h"] / 3; // Chia 3 để quy đổi ra lượng mưa/giờ
+                }
 
-              // Scale height: max 10mm for visualization
-              const heightPercent = Math.min((rain / 5) * 100, 100); 
-              let barColor = "bg-blue-400";
-              if (rain > 2.5) barColor = "bg-yellow-400";
-              if (rain > 10) barColor = "bg-red-400";
-              
-              // Nếu không mưa, hiển thị bar thấp mờ để giữ layout
-              if (rain === 0) barColor = "bg-blue-200/30";
+                // Scale height: max 10mm for visualization
+                const heightPercent = Math.min((rain / 5) * 100, 100);
+                let barColor = "bg-blue-400";
+                if (rain > 2.5) barColor = "bg-yellow-400";
+                if (rain > 10) barColor = "bg-red-400";
 
-              return (
-                <div 
-                  key={index} 
-                  className={`bar ${barColor}`} 
-                  style={{height: `${Math.max(heightPercent, 5)}%`}}
-                  data-val={`${rain.toFixed(1)}`}
-                ></div>
-              );
-            })}
+                // Nếu không mưa, hiển thị bar thấp mờ để giữ layout
+                if (rain === 0) barColor = "bg-blue-200/30";
+
+                return (
+                  <div
+                    key={index}
+                    className={`bar ${barColor}`}
+                    style={{ height: `${Math.max(heightPercent, 5)}%` }}
+                    data-val={`${rain.toFixed(1)}`}
+                  ></div>
+                );
+              })}
           </div>
 
           <div className="chart-labels">
-            {hourlyForecast && hourlyForecast.slice(0, 16).filter((_, i) => i % 3 === 0).map((hour, i) => (
-              <span key={i}>{new Date(hour.dt * 1000).getHours()}h</span>
-            ))}
+            {hourlyForecast &&
+              hourlyForecast
+                .slice(0, 16)
+                .filter((_, i) => i % 3 === 0)
+                .map((hour, i) => (
+                  <span key={i}>{new Date(hour.dt * 1000).getHours()}h</span>
+                ))}
           </div>
 
           <div className="chart-stats">
             <div className="chart-stat-item">
               <span className="chart-stat-label">TB 3h tới</span>
-              <span className="chart-stat-value">{rainfall3h.toFixed(1)} mm/h</span>
+              <span className="chart-stat-value">
+                {rainfall3h.toFixed(1)} mm/h
+              </span>
             </div>
             <div className="chart-stat-item">
               <span className="chart-stat-label">TB 6h tới</span>
               <span className="chart-stat-value">
-                {hourlyForecast ? calculateAverageRainfall(hourlyForecast, 6).toFixed(1) : 0} mm/h
+                {hourlyForecast
+                  ? calculateAverageRainfall(hourlyForecast, 6).toFixed(1)
+                  : 0}{" "}
+                mm/h
               </span>
             </div>
             <div className="chart-stat-item">
               <span className="chart-stat-label">TB 12h tới</span>
               <span className="chart-stat-value">
-                {hourlyForecast ? calculateAverageRainfall(hourlyForecast, 12).toFixed(1) : 0} mm/h
+                {hourlyForecast
+                  ? calculateAverageRainfall(hourlyForecast, 12).toFixed(1)
+                  : 0}{" "}
+                mm/h
               </span>
             </div>
           </div>
@@ -258,7 +289,6 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
 
       {/* RIGHT COLUMN */}
       <div className="weather-right-column">
-        
         {/* Indicators */}
         <div className="indicators-grid">
           {/* Humidity */}
@@ -269,7 +299,9 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
               </div>
               <div className="indicator-info">
                 <span className="indicator-label">Độ ẩm</span>
-                <span className="indicator-value">{weather?.current?.humidity}%</span>
+                <span className="indicator-value">
+                  {weather?.current?.humidity}%
+                </span>
               </div>
             </div>
           </div>
@@ -283,7 +315,8 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
               <div className="indicator-info">
                 <span className="indicator-label">Gió</span>
                 <span className="indicator-value">
-                  {weather?.current?.wind?.speed} <span className="indicator-value-unit">m/s</span>
+                  {weather?.current?.wind?.speed}{" "}
+                  <span className="indicator-value-unit">m/s</span>
                 </span>
               </div>
             </div>
@@ -298,7 +331,8 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
               <div className="indicator-info">
                 <span className="indicator-label">Áp suất</span>
                 <span className="indicator-value">
-                  {weather?.current?.pressure} <span className="indicator-value-unit">hPa</span>
+                  {weather?.current?.pressure}{" "}
+                  <span className="indicator-value-unit">hPa</span>
                 </span>
               </div>
             </div>
@@ -313,7 +347,8 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
               <div className="indicator-info">
                 <span className="indicator-label">Lượng mưa</span>
                 <span className="indicator-value">
-                  {rainfall3h.toFixed(1)} <span className="indicator-value-unit">mm/h</span>
+                  {rainfall3h.toFixed(1)}{" "}
+                  <span className="indicator-value-unit">mm/h</span>
                 </span>
               </div>
             </div>
@@ -327,18 +362,28 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
             {forecast?.daily?.slice(0, 5).map((day, index) => (
               <div key={index} className="forecast-item">
                 <span className="forecast-day">
-                  {index === 0 ? 'Hôm nay' : new Date(day.date).toLocaleDateString('vi-VN', {weekday: 'short', day: 'numeric', month: 'numeric'})}
+                  {index === 0
+                    ? "Hôm nay"
+                    : new Date(day.date).toLocaleDateString("vi-VN", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "numeric",
+                      })}
                 </span>
                 <div className="forecast-icon text-slate-500">
-                  <img 
-                    src={`https://openweathermap.org/img/wn/${day.weather.icon}.png`} 
-                    alt="" 
+                  <img
+                    src={`https://openweathermap.org/img/wn/${day.weather.icon}.png`}
+                    alt=""
                     className="w-8 h-8 object-contain"
                   />
                 </div>
                 <div className="forecast-temps">
-                  <span className="forecast-temp-high">{Math.round(day.temp_max)}°</span>
-                  <span className="forecast-temp-low">{Math.round(day.temp_min)}°</span>
+                  <span className="forecast-temp-high">
+                    {Math.round(day.temp_max)}°
+                  </span>
+                  <span className="forecast-temp-low">
+                    {Math.round(day.temp_min)}°
+                  </span>
                 </div>
                 <span className="forecast-rain">
                   {day.total_rain.toFixed(1)}mm
@@ -347,7 +392,6 @@ const WeatherDisplay = ({ onWeatherUpdate }) => {
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );
