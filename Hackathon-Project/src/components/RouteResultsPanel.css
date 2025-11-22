@@ -5,6 +5,8 @@
   flex-direction: column;
   gap: 0.75rem;
   animation: slideInBottom 0.5s ease-out;
+  max-height: 500px; /* Chiều cao cố định để chứa 5 routes */
+  overflow: hidden;
 }
 
 @keyframes slideInBottom {
@@ -73,11 +75,11 @@
 .route-accordion-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   overflow-y: auto;
-  max-height: calc(100vh - 250px);
+  max-height: 420px; /* Chiều cao list để scroll 5 routes */
   padding-right: 0.25rem;
-  padding-bottom: 2.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .route-accordion-list::-webkit-scrollbar {
@@ -112,12 +114,13 @@
 .route-accordion-card.selected {
   border-color: #4f46e5;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1), 0 0 0 4px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1),
+    0 0 0 4px rgba(79, 70, 229, 0.1);
 }
 
 /* Card Header */
 .route-card-header {
-  padding: 0.75rem;
+  padding: 0.65rem 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -215,12 +218,12 @@
 }
 
 .route-card-content.expanded {
-  max-height: 350px;
+  max-height: 200px;
   opacity: 1;
 }
 
 .route-card-inner {
-  padding: 0.75rem 0.875rem 1rem 0.875rem;
+  padding: 0.5rem 0.625rem 1.25rem 0.625rem;
   border-top: 1px solid rgba(226, 232, 240, 0.5);
 }
 
@@ -231,12 +234,12 @@
 
 .ai-analyze-btn {
   width: 100%;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 0.75rem;
   background: linear-gradient(to right, #eef2ff, #f3e8ff);
   border: 1px solid #c7d2fe;
   color: #4f46e5;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -307,6 +310,36 @@
   color: #334155;
   line-height: 1.5;
   margin: 0;
+}
+
+/* Gemini AI Recommendation Styles */
+.route-accordion-card.gemini-recommended {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.route-accordion-card.gemini-recommended:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.route-accordion-card.gemini-recommended.selected {
+  border-color: #8b5cf6;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.15),
+    0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+.route-number-circle.gemini-badge {
+  position: relative;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: white;
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
+}
+
+.route-number-circle.gemini-badge.active {
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  box-shadow: 0 6px 12px rgba(139, 92, 246, 0.5);
 }
 
 /* Responsive */

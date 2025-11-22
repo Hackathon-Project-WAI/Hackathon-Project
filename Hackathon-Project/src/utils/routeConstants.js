@@ -59,14 +59,14 @@ export const MAP_CONFIG = {
  * Routing Configuration
  */
 export const ROUTING_CONFIG = {
-  maxAlternatives: 6, // HERE API v8 max = 6
+  maxAlternatives: 5, // Giới hạn 5 tuyến đường thay thế
   maxAvoidAreas: 10,
   transportMode: "car", // Default mode
   routingMode: "fast",
   returnValues: "polyline,summary,actions,instructions",
   avoidFloodZones: true, // Chủ động tránh vùng ngập
-  floodBufferPercent: 0, // Buffer cố định 100m (tính trong convertFloodZonesToAvoidAreas)
-  floodBufferMeters: 100, // Buffer cố định 100m
+  floodBufferPercent: 0, // Buffer động theo radius (tính trong convertFloodZonesToAvoidAreas)
+  floodBufferMeters: 5, // Buffer thêm 5m ngoài bán kính vùng ngập
   avoidRiskLevels: ["high", "medium", "low"], // Tránh TẤT CẢ vùng ngập
 };
 

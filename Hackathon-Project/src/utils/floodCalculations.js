@@ -115,7 +115,7 @@ export const checkRouteFloodIntersection = (
  * @returns {Array} Routes với thông tin flood count
  */
 export const analyzeRoutesFlood = (routes, floodZones) => {
-  return routes.map((route, index) => {
+  const analyzed = routes.map((route, index) => {
     const section = route.sections[0];
     const affectedZones = checkRouteFloodIntersection(
       section.polyline,
@@ -134,6 +134,41 @@ export const analyzeRoutesFlood = (routes, floodZones) => {
       index,
     };
   });
+
+  // Chỉ giữ lại routes AN TOÀN (không đi qua vùng ngập)
+  const safeRoutes = analyzed.filter(route => route.floodCount === 0);
+
+  // Loại bỏ routes trùng lặp (cùng duration và distance)
+  const uniqueRoutes = [];
+  const seen = new Set();
+  
+  for (const route of safeRoutes) {
+    // Key dựa trên duration (phút) và distance (km) làm tròn 2 chữ số
+    const key = `${Math.round(route.duration)}-${route.distance.toFixed(2)}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueRoutes.push(route);
+    }
+  }
+
+  // Sắp xếp routes an toàn: Khoảng cách ngắn → Thời gian nhanh
+  uniqueRoutes.sort((a, b) => {
+    // 1. Ưu tiên khoảng cách ngắn hơn
+    if (Math.abs(a.distance - b.distance) > 0.5) {
+      // chênh > 500m
+      return a.distance - b.distance;
+    }
+    // 2. Nếu cùng khoảng cách, ưu tiên thời gian nhanh hơn
+    return a.duration - b.duration;
+  });
+
+  // Cập nhật lại index sau khi sort
+  const sortedWithNewIndex = uniqueRoutes.slice(0, 5).map((route, newIndex) => ({
+    ...route,
+    index: newIndex,
+  }));
+
+  return sortedWithNewIndex;
 };
 
 /**
@@ -145,31 +180,12 @@ export const analyzeRoutesFlood = (routes, floodZones) => {
 export const selectBestRoute = (analyzedRoutes, priority = "floodCount") => {
   if (!analyzedRoutes || analyzedRoutes.length === 0) return null;
 
-  let bestRoute = analyzedRoutes[0];
-  let bestIndex = 0;
+  // Routes đã được sắp xếp trong analyzeRoutesFlood
+  // Route đầu tiên là tốt nhất: An toàn nhất → Ngắn nhất → Nhanh nhất
+  const bestRoute = analyzedRoutes[0];
 
-  analyzedRoutes.forEach((analysis, index) => {
-    // Ưu tiên 1: ít flood zones nhất
-    if (analysis.floodCount < bestRoute.floodCount) {
-      bestRoute = analysis;
-      bestIndex = index;
-    }
-    // Nếu bằng số flood zones, so sánh theo priority
-    else if (analysis.floodCount === bestRoute.floodCount) {
-      if (priority === "distance" && analysis.distance < bestRoute.distance) {
-        bestRoute = analysis;
-        bestIndex = index;
-      } else if (
-        priority === "duration" &&
-        analysis.duration < bestRoute.duration
-      ) {
-        bestRoute = analysis;
-        bestIndex = index;
-      }
-    }
-  });
-
-  return { ...bestRoute, bestIndex };
+  // ✅ bestIndex luôn là 0 sau khi sort
+  return { ...bestRoute, bestIndex: 0 };
 };
 
 /**
@@ -216,8 +232,8 @@ export const convertFloodZonesToAvoidAreas = (
     const lng = zone.coords?.lng || zone.lng;
     const radius = zone.radius || 300; // meters - mặc định 300m nếu không có radius
 
-    // Thêm buffer cố định (100m)
-    const bufferedRadius = radius + bufferMeters; // Tính bounding box (xấp xỉ)
+    // Thêm buffer (mặc định +5m) để tuyến đường né vùng ngập
+    const bufferedRadius = radius + bufferMeters; // bufferedRadius = radius + 5m
     // 1 degree latitude ≈ 111km
     // 1 degree longitude ≈ 111km * cos(latitude)
     const latDelta = bufferedRadius / 1000 / 111; // degrees

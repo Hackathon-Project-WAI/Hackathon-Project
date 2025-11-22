@@ -75,9 +75,10 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     allRoutes,
     selectedRouteIndex,
     selectedRoute,
-    routeInfo,
-    routeWarning,
+    // routeInfo,
+    // routeWarning,
     loading,
+    geminiRecommendation,
     calculateRoute,
     selectRoute,
     clearRoute,
@@ -567,6 +568,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
             selectedIndex={selectedRouteIndex}
             onSelectRoute={selectRoute}
             onClearRoute={handleClearRoute}
+            geminiRecommendation={geminiRecommendation}
           />
         )}
       </div>
