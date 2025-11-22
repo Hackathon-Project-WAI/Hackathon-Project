@@ -354,6 +354,7 @@ class PersonalizedAlertController {
 
         // Lấy tất cả sensors
         const sensors = await sensorBasedAlertService.getAllSensors();
+        console.log(`📡 Tổng số sensors: ${Object.keys(sensors).length}`);
 
         // Check location tạm với sensors
         const nearbyFloods =
@@ -361,16 +362,23 @@ class PersonalizedAlertController {
             {
               name: "Địa điểm đang chọn",
               coords: {
-                lat: checkLocation.coords.lat,
-                lon: checkLocation.coords.lon,
+                lat: parseFloat(checkLocation.coords.lat),
+                lon: parseFloat(checkLocation.coords.lon),
               },
               alertRadius: checkLocation.alertRadius || 1000,
             },
             sensors,
-            {} // User settings mặc định
+            {
+              waterLevelThreshold: 50, // Mặc định 50cm
+            } // User settings mặc định
           );
 
+        console.log(
+          `📊 Kết quả check: ${nearbyFloods.length} sensors gần đó đang cảnh báo`
+        );
+
         if (nearbyFloods.length > 0) {
+          console.log("⚠️ CẢNH BÁO: Phát hiện sensors gần đó:", nearbyFloods);
           return res.json({
             success: true,
             message: `Phát hiện ${nearbyFloods.length} sensor gần đó đang cảnh báo`,
@@ -385,6 +393,7 @@ class PersonalizedAlertController {
             })),
           });
         } else {
+          console.log("✅ Địa điểm này an toàn - không có sensor nào cảnh báo");
           return res.json({
             success: true,
             message: "Địa điểm này an toàn",

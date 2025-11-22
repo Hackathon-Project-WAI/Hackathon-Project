@@ -304,9 +304,9 @@ const ProfilePage = () => {
     let sensorAlerts = [];
     try {
       console.log("🔍 Đang check với sensor data tại tọa độ:", position);
-      const { apiClient } = await import("../api/config");
+      const apiClient = (await import("../api/client")).default;
 
-      // Gọi API check với tọa độ trực tiếp (không cần userId vì chỉ check tọa độ)
+      // Gọi API check với tọa độ trực tiếp
       const response = await apiClient.post("/api/check-sensor-based-alert", {
         userId: user?.uid || "temp", // Dùng temp nếu chưa login
         sendEmail: false, // Không gửi email khi đang chọn
@@ -319,6 +319,8 @@ const ProfilePage = () => {
           alertRadius: 1000,
         },
       });
+
+      console.log("📡 API Response:", response.data);
 
       // Lấy alerts từ response
       if (
@@ -343,9 +345,14 @@ const ProfilePage = () => {
         });
       } else {
         console.log("✅ Không có sensor nào cảnh báo tại tọa độ này");
+        console.log("📊 Response data:", response.data);
       }
     } catch (sensorError) {
       console.error("❌ Lỗi check sensor data:", sensorError);
+      console.error(
+        "❌ Error details:",
+        sensorError.response?.data || sensorError.message
+      );
       // Không block user nếu check thất bại
     }
 
