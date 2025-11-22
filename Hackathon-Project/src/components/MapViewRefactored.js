@@ -16,7 +16,6 @@ import { useRouting } from "../hooks/useRouting";
 import { useWeatherOverlay } from "../hooks/useWeatherOverlay";
 import {
   createUserLocationMarker,
-  createUserSavedLocationMarker,
   createRouteMarker,
   createFloodZoneCircle,
   createPlaceMarker,
@@ -38,11 +37,10 @@ import LocateMeButton from "./LocateMeButton";
 import sensorService from "../services/sensorService";
 import "./MapViewRefactored.css";
 
-const MapViewRefactored = ({ places, apiKey, floodZones = [], userLocations = [] }) => {
+const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
   console.log("🚀 MapViewRefactored mounted/updated", {
     placesCount: places?.length,
     mockFloodZones: floodZones?.length,
-    userLocationsCount: userLocations?.length,
     hasApiKey: !!apiKey,
   });
 
@@ -51,7 +49,6 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [], userLocations = []
   const floodOverlayGroup = useRef(null);
   const routeGroup = useRef(null);
   const userMarkerRef = useRef(null);
-  const userLocationsGroup = useRef(null); // Group cho user saved locations
 
   const [routingMode, setRoutingMode] = useState(true); // Mặc định bật search mode
   const [floodZonesVisible, setFloodZonesVisible] = useState(true);
@@ -313,67 +310,6 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [], userLocations = []
 
     addObject(markersGroup.current);
   }, [mapReady, map, places, addObject, removeObject]);
-
-  // ========== USER SAVED LOCATIONS MARKERS ==========
-  useEffect(() => {
-    if (!mapReady || !map || !window.H) return;
-
-    // Xóa markers cũ
-    if (userLocationsGroup.current) {
-      removeObject(userLocationsGroup.current);
-    }
-
-    if (!userLocations || userLocations.length === 0) return;
-
-    console.log(`📍 Hiển thị ${userLocations.length} địa điểm đã lưu của user`);
-
-    // Tạo group mới
-    userLocationsGroup.current = new window.H.map.Group();
-
-    userLocations.forEach((location) => {
-      // Kiểm tra có tọa độ hợp lệ
-      if (
-        !location.coords ||
-        typeof location.coords.lat !== "number" ||
-        typeof location.coords.lon !== "number"
-      ) {
-        console.warn(`⚠️ Location "${location.name}" thiếu tọa độ hợp lệ`, location);
-        return;
-      }
-
-      const marker = createUserSavedLocationMarker(
-        location.coords.lat,
-        location.coords.lon,
-        location.name || "Địa điểm của bạn",
-        location.icon || "📍"
-      );
-
-      if (marker) {
-        // Thêm click event để hiển thị info
-        marker.addEventListener("tap", (evt) => {
-          evt.stopPropagation();
-          console.log("📍 Clicked on user location:", location.name);
-          const data = {
-            name: location.name,
-            address: location.address || "Địa điểm đã lưu",
-            type: "userLocation",
-            icon: location.icon,
-            priority: location.priority,
-            riskLevel: "low", // Default
-          };
-          showFloodInfoBubble(data, {
-            lat: location.coords.lat,
-            lng: location.coords.lon,
-          });
-        });
-
-        userLocationsGroup.current.addObject(marker);
-      }
-    });
-
-    addObject(userLocationsGroup.current);
-    console.log(`✅ Đã thêm ${userLocationsGroup.current.getObjects().length} markers cho user locations`);
-  }, [mapReady, map, userLocations, addObject, removeObject, showFloodInfoBubble]);
 
   // ========== USER LOCATION MARKER & AUTO ZOOM ==========
 
