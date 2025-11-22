@@ -1,0 +1,34 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    
+    "telegram_users": {
+      ".indexOn": ["chat_id", "userId"]
+    },
+    
+    "userSettings": {
+      "$userId": {
+        "alertSettings": {
+          ".indexOn": ["enabled", "updatedAt"]
+        }
+      }
+    },
+    
+    "userProfiles": {
+      "$userId": {
+        "locations": {
+          ".indexOn": ["status", "createdAt"]
+        }
+      }
+    },
+    
+    "sensors": {
+      ".indexOn": ["timestamp", "flood_status"]
+    },
+    
+    "iotData": {
+      ".indexOn": ["timestamp", "current_percent"]
+    }
+  }
+}
