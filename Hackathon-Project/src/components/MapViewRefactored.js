@@ -19,6 +19,7 @@ import {
   createRouteMarker,
   createFloodZoneCircle,
   createPlaceMarker,
+  getRiskColors,
   formatFloodInfoBubble,
   zoomToBounds,
 } from "../utils/mapHelpers";
@@ -224,6 +225,9 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
       const lat = zone.coords?.lat || zone.lat;
       const lng = zone.coords?.lng || zone.lng;
       const radius = zone.radius || 500;
+      // For sensor zones, use a larger display radius so it's visible on typical zoom levels
+      // without changing the actual `zone.radius` used by routing logic.
+      const displayRadius = zone.type === 'sensor' ? Math.max(radius, 100) : radius;
       const riskLevel = zone.riskLevel || "medium";
 
       console.log(
@@ -239,10 +243,24 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
         }
       );
 
-      const circle = createFloodZoneCircle(lat, lng, radius, riskLevel);
+      const circle = createFloodZoneCircle(lat, lng, displayRadius, riskLevel);
       if (!circle) {
         console.error(`❌ Failed to create circle for zone ${zone.id}`);
         return;
+      }
+
+      // If this is a sensor, emphasize the circle visually
+      if (zone.type === 'sensor') {
+        try {
+          // Slightly thicker border and stronger fill for visibility
+          circle.setStyle({
+            lineWidth: 3,
+            fillColor: getRiskColors(riskLevel).fill,
+            strokeColor: getRiskColors(riskLevel).stroke,
+          });
+        } catch (err) {
+          // ignore style set errors
+        }
       }
 
       console.log(
@@ -276,6 +294,9 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     addObject(floodOverlayGroup.current);
 
     console.log("✅ Flood zones overlay added");
+  // We intentionally don't include `showFloodInfoBubble` to avoid re-creating the overlay
+  // when that callback changes; the event handlers will call the current function reference.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     mapReady,
     map,

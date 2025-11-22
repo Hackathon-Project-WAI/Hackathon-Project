@@ -70,41 +70,89 @@ async function handleStartCommand(message) {
     // Nếu có userId từ QR code, link tự động
     if (userIdFromDeepLink) {
       console.log(
-        `🔗 Đang link Telegram với Firebase user: ${userIdFromDeepLink}`
+        `🔗 [${new Date().toISOString()}] Đang link Telegram chat ${chatId} với Firebase user: ${userIdFromDeepLink}`
       );
 
-      // Lấy email từ Firebase
+      // Lấy email từ Firebase với timeout và retry
       const admin = require("firebase-admin");
       const db = admin.database();
-      const userRef = db.ref(`userProfiles/${userIdFromDeepLink}`);
-      const userSnapshot = await userRef.once("value");
-
+      
       let userEmail = null;
       let userName = firstName;
+      let linkSuccess = false;
 
-      if (userSnapshot.exists()) {
-        const userData = userSnapshot.val();
-        userEmail = userData.email;
-        userName = userData.name || userData.displayName || firstName;
+      // Retry logic cho Firebase operations
+      const maxRetries = 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const userRef = db.ref(`userProfiles/${userIdFromDeepLink}`);
+          const userSnapshot = await Promise.race([
+            userRef.once("value"),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Firebase timeout")), 10000)
+            )
+          ]);
 
-        // Lưu chat_id vào user profile
-        await db
-          .ref(`userProfiles/${userIdFromDeepLink}/telegramChatId`)
-          .set(chatId.toString());
-        console.log(
-          `✅ Đã link chat_id ${chatId} với user ${userIdFromDeepLink}`
-        );
+          if (userSnapshot.exists()) {
+            const userData = userSnapshot.val();
+            userEmail = userData.email;
+            userName = userData.name || userData.displayName || firstName;
+
+            // Lưu chat_id vào user profile với timeout
+            await Promise.race([
+              db.ref(`userProfiles/${userIdFromDeepLink}/telegramChatId`).set(chatId.toString()),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Firebase write timeout")), 10000)
+              )
+            ]);
+            
+            console.log(
+              `✅ [Attempt ${attempt}] Đã link chat_id ${chatId} với user ${userIdFromDeepLink}`
+            );
+            linkSuccess = true;
+            break;
+          } else {
+            console.warn(`⚠️ User ${userIdFromDeepLink} không tồn tại trong Firebase`);
+            break;
+          }
+        } catch (error) {
+          console.error(`❌ [Attempt ${attempt}/${maxRetries}] Lỗi Firebase cho user ${userIdFromDeepLink}:`, error.message);
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          } else {
+            throw error;
+          }
+        }
       }
 
       // Lưu người dùng vào telegram_users với email VÀ set is_active = true
-      const result = await saveTelegramUser(chatId, {
-        username,
-        first_name: firstName,
-        last_name: lastName,
-        email: userEmail,
-        firebase_user_id: userIdFromDeepLink,
-        is_active: true, // ⭐ QUAN TRỌNG: Reactivate user
-      });
+      // Retry cho saveTelegramUser
+      let saveSuccess = false;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const result = await Promise.race([
+            saveTelegramUser(chatId, {
+              username,
+              first_name: firstName,
+              last_name: lastName,
+              email: userEmail,
+              firebase_user_id: userIdFromDeepLink,
+              is_active: true, // ⭐ QUAN TRỌNG: Reactivate user
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Save user timeout")), 10000)
+            )
+          ]);
+          saveSuccess = true;
+          console.log(`✅ [Attempt ${attempt}] Đã lưu telegram user ${chatId}`);
+          break;
+        } catch (error) {
+          console.error(`❌ [Attempt ${attempt}/${maxRetries}] Lỗi lưu telegram user:`, error.message);
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
+        }
+      }
 
       // Tin nhắn chào mừng với tên từ Firebase
       const welcomeMessage = `
@@ -128,9 +176,15 @@ ${userEmail ? `📧 Email: ${userEmail}` : ""}
 
       await sendMessage(chatId, welcomeMessage);
 
-      console.log(
-        `✅ User ${chatId} (${username}) đã liên kết với Firebase account ${userIdFromDeepLink}`
-      );
+      if (linkSuccess && saveSuccess) {
+        console.log(
+          `✅ [${new Date().toISOString()}] User ${chatId} (${username}) đã liên kết thành công với Firebase account ${userIdFromDeepLink}`
+        );
+      } else {
+        console.warn(
+          `⚠️ [${new Date().toISOString()}] User ${chatId} (${username}) link với ${userIdFromDeepLink} nhưng có một số thao tác thất bại`
+        );
+      }
       return;
     }
 
@@ -167,11 +221,21 @@ Xin chào *${firstName}*! 👋
       }`
     );
   } catch (error) {
-    console.error(`❌ Lỗi xử lý lệnh /start cho ${chatId}:`, error.message);
-    await sendMessage(
-      chatId,
-      "❌ Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau."
-    );
+    console.error(`❌ [${new Date().toISOString()}] Lỗi xử lý lệnh /start cho ${chatId}:`, error.message);
+    console.error(`📋 Stack trace:`, error.stack);
+    
+    // Gửi thông báo lỗi cho user
+    try {
+      await sendMessage(
+        chatId,
+        "❌ Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau hoặc liên hệ hỗ trợ."
+      );
+    } catch (sendError) {
+      console.error(`❌ Không thể gửi thông báo lỗi tới ${chatId}:`, sendError.message);
+    }
+    
+    // Re-throw để retry mechanism có thể xử lý
+    throw error;
   }
 }
 
@@ -273,22 +337,77 @@ async function handleMessage(message) {
 }
 
 /**
- * Xử lý các updates từ Telegram
+ * Xử lý một update với retry mechanism
+ * @param {object} update - Telegram update object
+ * @param {number} retries - Số lần retry còn lại
+ */
+async function processSingleUpdate(update, retries = 3) {
+  const updateId = update.update_id;
+  const chatId = update.message?.chat?.id || 'unknown';
+  
+  try {
+    console.log(`🔄 Xử lý update ${updateId} cho chat ${chatId}`);
+    
+    // Xử lý tin nhắn
+    if (update.message) {
+      await handleMessage(update.message);
+    }
+    
+    // ⭐ QUAN TRỌNG: Chỉ cập nhật offset SAU KHI xử lý thành công
+    updateOffset = Math.max(updateOffset, updateId + 1);
+    console.log(`✅ Đã xử lý thành công update ${updateId}, offset mới: ${updateOffset}`);
+    
+    return true;
+  } catch (error) {
+    console.error(`❌ Lỗi xử lý update ${updateId} (chat ${chatId}):`, error.message);
+    console.error(`📋 Stack trace:`, error.stack);
+    
+    // Retry nếu còn retries
+    if (retries > 0) {
+      const delay = (4 - retries) * 1000; // Exponential backoff: 1s, 2s, 3s
+      console.log(`🔄 Retry update ${updateId} sau ${delay}ms (còn ${retries - 1} lần thử)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return await processSingleUpdate(update, retries - 1);
+    } else {
+      // Nếu hết retries, vẫn cập nhật offset để không bị stuck
+      // Nhưng log warning
+      console.warn(`⚠️ Bỏ qua update ${updateId} sau 3 lần thử thất bại`);
+      updateOffset = Math.max(updateOffset, updateId + 1);
+      return false;
+    }
+  }
+}
+
+/**
+ * Xử lý các updates từ Telegram (song song để tăng tốc độ)
  * @param {Array} updates - Danh sách updates
  */
 async function processUpdates(updates) {
-  for (const update of updates) {
-    try {
-      // Cập nhật offset
-      updateOffset = Math.max(updateOffset, update.update_id + 1);
-
-      // Xử lý tin nhắn
-      if (update.message) {
-        await handleMessage(update.message);
-      }
-    } catch (error) {
-      console.error("❌ Lỗi xử lý update:", error.message);
-    }
+  if (!updates || updates.length === 0) {
+    return;
+  }
+  
+  console.log(`📨 Bắt đầu xử lý ${updates.length} updates...`);
+  
+  // Xử lý song song nhưng giới hạn concurrent để tránh quá tải
+  const CONCURRENT_LIMIT = 5; // Xử lý tối đa 5 updates cùng lúc
+  const results = [];
+  
+  for (let i = 0; i < updates.length; i += CONCURRENT_LIMIT) {
+    const batch = updates.slice(i, i + CONCURRENT_LIMIT);
+    const batchPromises = batch.map(update => processSingleUpdate(update));
+    const batchResults = await Promise.allSettled(batchPromises);
+    results.push(...batchResults);
+  }
+  
+  // Thống kê kết quả
+  const successful = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
+  const failed = results.length - successful;
+  
+  if (failed > 0) {
+    console.warn(`⚠️ Xử lý updates: ${successful} thành công, ${failed} thất bại`);
+  } else {
+    console.log(`✅ Đã xử lý thành công ${successful} updates`);
   }
 }
 
@@ -306,9 +425,18 @@ async function getUpdates() {
       timeout: (POLLING_TIMEOUT + 5) * 1000, // Thêm 5 giây buffer
     });
 
-    if (response.data.ok && response.data.result.length > 0) {
-      console.log(`📨 Nhận được ${response.data.result.length} updates mới`);
-      await processUpdates(response.data.result);
+    if (response.data.ok) {
+      if (response.data.result.length > 0) {
+        console.log(`📨 [${new Date().toISOString()}] Nhận được ${response.data.result.length} updates mới`);
+        await processUpdates(response.data.result);
+      }
+      // Cập nhật offset ngay cả khi không có updates mới để tránh bị stuck
+      if (response.data.result.length > 0) {
+        const maxUpdateId = Math.max(...response.data.result.map(u => u.update_id));
+        updateOffset = Math.max(updateOffset, maxUpdateId + 1);
+      }
+    } else {
+      console.error(`❌ Telegram API trả về lỗi:`, response.data);
     }
   } catch (error) {
     if (error.code === "ECONNABORTED") {
