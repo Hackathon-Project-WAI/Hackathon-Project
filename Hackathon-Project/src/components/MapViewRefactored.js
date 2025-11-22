@@ -78,6 +78,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
     // routeInfo,
     // routeWarning,
     loading,
+    error: routeError, // ✅ Thêm error từ hook
     geminiRecommendation,
     calculateRoute,
     selectRoute,
@@ -154,6 +155,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
 
       // Click event
       circle.addEventListener("tap", (evt) => {
+        evt.stopPropagation();
         const data = evt.target.getData();
         showFloodInfoBubble(data, data.coords);
       });
@@ -378,22 +380,103 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
    */
   const showFloodInfoBubble = useCallback(
     (zoneData, coords) => {
-      if (!map || !platform || !window.H) return;
+      if (!map || !window.H) return;
 
-      // Lấy hoặc tạo UI
-      let ui = map.getUI();
-      if (!ui) {
-        const defaultLayers = platform.createDefaultLayers();
-        ui = window.H.ui.UI.createDefault(map, defaultLayers);
-      }
+      const riskIcons = {
+        high: "🔴",
+        medium: "🟡",
+        low: "🟢",
+      };
 
-      const bubble = new window.H.ui.InfoBubble(coords, {
-        content: formatFloodInfoBubble(zoneData),
+      const riskTexts = {
+        high: "Ngập cao",
+        medium: "Ngập trung bình",
+        low: "Ngập nhẹ",
+      };
+
+      const icon = riskIcons[zoneData.riskLevel] || "⚠️";
+      const riskText = riskTexts[zoneData.riskLevel] || "Ngập";
+
+      //Tạo DOM element - Click vào popup để đóng (đơn giản hơn)
+      const popupDiv = document.createElement("div");
+      popupDiv.style.cssText = "cursor: pointer; pointer-events: auto;";
+      popupDiv.innerHTML = `<div class="flood-popup-wrapper" style="
+            position: relative;
+            background: rgba(239, 68, 68, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 12px 16px;
+            min-width: 220px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            z-index: 1000;
+            transform: translate(-50%, -100%);
+            margin-top: -10px;
+          ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 24px;">${icon}</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">
+                  CẢNH BÁO VÙNG NGẬP
+                </div>
+                <div style="font-size: 13px; opacity: 0.95;">
+                  ${zoneData.name} - ${riskText}
+                </div>
+                <div style="font-size: 12px; opacity: 0.85; margin-top: 4px; font-weight: 600;">
+                  ⛔ Không nên đi qua khu vực này
+                </div>
+              </div>
+            </div>
+            <div style="
+              position: absolute;
+              bottom: -8px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 0;
+              height: 0;
+              border-left: 8px solid transparent;
+              border-right: 8px solid transparent;
+              border-top: 8px solid rgba(239, 68, 68, 0.95);
+            "></div>
+          </div>`;
+
+      const popupMarker = new window.H.map.DomMarker(coords, {
+        icon: new window.H.map.DomIcon(popupDiv),
       });
 
-      ui.addBubble(bubble);
+      // ✅ Click vào TOÀN BỘ popup để đóng
+      popupDiv.addEventListener("click", (e) => {
+        e.stopPropagation();
+        try {
+          map.removeObject(popupMarker);
+        } catch (err) {
+          console.log("Popup already removed");
+        }
+      });
+
+      // Hover effect cho toàn bộ popup
+      popupDiv.addEventListener("mouseenter", () => {
+        popupDiv.style.transform = "scale(1.02)";
+        popupDiv.style.transition = "transform 0.2s";
+      });
+      popupDiv.addEventListener("mouseleave", () => {
+        popupDiv.style.transform = "scale(1)";
+      });
+
+      map.addObject(popupMarker);
+
+      // Auto remove sau 5 giây
+      setTimeout(() => {
+        try {
+          map.removeObject(popupMarker);
+        } catch (e) {
+          console.log("Popup already removed");
+        }
+      }, 5000);
     },
-    [map, platform]
+    [map]
   );
 
   /**
@@ -588,6 +671,7 @@ const MapViewRefactored = ({ places, apiKey, floodZones = [] }) => {
           routeStart={routeStart}
           routeEnd={routeEnd}
           loading={loading}
+          error={routeError}
         />
       )}
 

@@ -136,12 +136,24 @@ export const analyzeRoutesFlood = (routes, floodZones) => {
   });
 
   // Chỉ giữ lại routes AN TOÀN (không đi qua vùng ngập)
-  const safeRoutes = analyzed.filter(route => route.floodCount === 0);
+  const safeRoutes = analyzed.filter((route) => route.floodCount === 0);
+
+  // ✅ Nếu KHÔNG có route an toàn nào, trả về object đặc biệt
+  if (safeRoutes.length === 0) {
+    console.warn("⚠️ CẢNH BÁO: Tất cả routes đều đi qua vùng ngập!");
+    return {
+      allUnsafe: true,
+      totalRoutes: analyzed.length,
+      routes: [], // Không trả về routes nào
+      message:
+        "Tất cả các tuyến đường đều đi qua vùng ngập lụt. Vui lòng chọn điểm đến khác hoặc đợi thời tiết tốt hơn.",
+    };
+  }
 
   // Loại bỏ routes trùng lặp (cùng duration và distance)
   const uniqueRoutes = [];
   const seen = new Set();
-  
+
   for (const route of safeRoutes) {
     // Key dựa trên duration (phút) và distance (km) làm tròn 2 chữ số
     const key = `${Math.round(route.duration)}-${route.distance.toFixed(2)}`;
@@ -163,10 +175,12 @@ export const analyzeRoutesFlood = (routes, floodZones) => {
   });
 
   // Cập nhật lại index sau khi sort
-  const sortedWithNewIndex = uniqueRoutes.slice(0, 5).map((route, newIndex) => ({
-    ...route,
-    index: newIndex,
-  }));
+  const sortedWithNewIndex = uniqueRoutes
+    .slice(0, 5)
+    .map((route, newIndex) => ({
+      ...route,
+      index: newIndex,
+    }));
 
   return sortedWithNewIndex;
 };

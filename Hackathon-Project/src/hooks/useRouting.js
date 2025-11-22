@@ -179,29 +179,41 @@ export const useRouting = (getRoutingService, floodZones) => {
             // Analyze all routes for flood
             const analyzedRoutes = analyzeRoutesFlood(allRoutes, floodZones);
 
+            // ✅ KIỂM TRA: Nếu tất cả routes đều ngập
+            if (analyzedRoutes.allUnsafe) {
+              console.error("❌", analyzedRoutes.message);
+              setLoading(false);
+              setError(analyzedRoutes.message);
+              setAllRoutes([]);
+              // ✅ KHÔNG reject - resolve với mảng rỗng để UI hiển thị thông báo
+              resolve([]);
+              return;
+            }
+
+            // ✅ KIỂM TRA: Nếu không có routes an toàn nào
+            if (!analyzedRoutes || analyzedRoutes.length === 0) {
+              console.error("❌ Không tìm thấy tuyến đường an toàn");
+              const errorMessage =
+                "Không tìm thấy tuyến đường an toàn. Tất cả các đường đều đi qua vùng ngập lụt.";
+              setLoading(false);
+              setError(errorMessage);
+              setAllRoutes([]);
+              // ✅ KHÔNG reject - resolve với mảng rỗng để UI hiển thị thông báo
+              resolve([]);
+              return;
+            }
+
             // Log analysis với chi tiết
-            console.log("🔍 Kết quả phân tích các tuyến đường:");
+            console.log("🔍 Kết quả phân tích các tuyến đường AN TOÀN:");
             analyzedRoutes.forEach((analysis, index) => {
               console.log(
                 `  ${index + 1}. ${analysis.distance.toFixed(
                   2
-                )} km, ${Math.round(analysis.duration)} phút`
+                )} km, ${Math.round(analysis.duration)} phút - ✅ An toàn`
               );
-              console.log(
-                `     → Vùng ngập: ${
-                  analysis.floodCount > 0
-                    ? `⚠️ ${analysis.floodCount} zones`
-                    : "✅ An toàn (không đi qua vùng ngập)"
-                }`
-              );
-              if (analysis.floodCount > 0) {
-                analysis.affectedZones.forEach((zone) => {
-                  console.log(`        - ${zone.name} (${zone.riskLevel})`);
-                });
-              }
             });
 
-            // Select best route (ưu tiên ít ngập nhất)
+            // Select best route (route đầu tiên sau khi sort)
             let bestRoute = selectBestRoute(analyzedRoutes);
 
             // 🤖 Gemini AI: Phân tích thông minh để chọn route tốt nhất
@@ -247,29 +259,13 @@ export const useRouting = (getRoutingService, floodZones) => {
             // Execute Gemini analysis then finalize route
             processGeminiAnalysis()
               .then((finalBestRoute) => {
-                if (
-                  avoidFloods &&
-                  finalBestRoute.floodCount > 0 &&
-                  zonesToAvoid.length > 0
-                ) {
-                  console.warn(
-                    `⚠️ Mặc dù đã tránh ${zonesToAvoid.length} vùng ngập, route vẫn đi qua ${finalBestRoute.floodCount} vùng ngập khác!`
-                  );
-                  console.log(
-                    "💡 Có thể là: vùng ngập mức thấp (low) hoặc route quá xa"
-                  );
-                }
-
+                // ✅ Tất cả routes đã được lọc là AN TOÀN (floodCount = 0)
                 console.log(
-                  `✅ Đề xuất route ${
+                  `✅ Đề xuất route AN TOÀN ${
                     finalBestRoute.bestIndex + 1
                   }: ${finalBestRoute.distance.toFixed(2)} km, ${Math.round(
                     finalBestRoute.duration
-                  )} phút - ${
-                    finalBestRoute.floodCount === 0
-                      ? "✅ An toàn"
-                      : `⚠️ ${finalBestRoute.floodCount} vùng ngập`
-                  }`
+                  )} phút - ✅ Không đi qua vùng ngập`
                 );
 
                 setAllRoutes(analyzedRoutes);

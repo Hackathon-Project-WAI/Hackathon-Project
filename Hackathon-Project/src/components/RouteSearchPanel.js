@@ -38,6 +38,7 @@ const RouteSearchPanel = ({
   routeStart,
   routeEnd,
   loading,
+  error, // ✅ Thêm prop error
 }) => {
   const [startQuery, setStartQuery] = useState("");
   const [endQuery, setEndQuery] = useState("");
@@ -45,6 +46,7 @@ const RouteSearchPanel = ({
   const [selectedMode, setSelectedMode] = useState("car");
   const [startPoint, setStartPoint] = useState(null);
   const [endPoint, setEndPoint] = useState(null);
+  const [showError, setShowError] = useState(true); // ✅ State để control hiển thị error
 
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
@@ -66,6 +68,13 @@ const RouteSearchPanel = ({
       hasAutoFilledRef.current = true;
     }
   }, [userLocation, startQuery]);
+
+  // ✅ Reset showError khi có error mới
+  useEffect(() => {
+    if (error) {
+      setShowError(true);
+    }
+  }, [error]);
 
   // Handle input change
   const handleInputChange = (type, value) => {
@@ -382,6 +391,65 @@ const RouteSearchPanel = ({
             })()}
           </div>
         </div>
+
+        {/* ✅ Error Message */}
+        {error && showError && (
+          <div
+            className="route-error-message"
+            style={{
+              padding: "12px",
+              marginTop: "12px",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              color: "#ef4444",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "8px",
+              marginBottom: "12px",
+              position: "relative",
+            }}
+          >
+            <span style={{ fontSize: "18px" }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <strong>Không tìm thấy đường an toàn</strong>
+              <p
+                style={{ margin: "4px 0 0 0", fontSize: "13px", opacity: 0.9 }}
+              >
+                {error}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowError(false)}
+              style={{
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                background: "transparent",
+                border: "none",
+                color: "#ef4444",
+                cursor: "pointer",
+                padding: "4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "4px",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "rgba(239, 68, 68, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
+              title="Đóng"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         <button
           onClick={handleCalculateRoute}
