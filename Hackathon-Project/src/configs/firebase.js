@@ -6,16 +6,19 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
+import { getDatabase } from "firebase/database";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAjU-UIf6pjFeKboqM0wFGYTTBTXllEc_E",
-  authDomain: "hackathon-weather-634bf.firebaseapp.com",
-  projectId: "hackathon-weather-634bf",
-  storageBucket: "hackathon-weather-634bf.firebasestorage.app",
-  messagingSenderId: "571676910483",
-  appId: "1:571676910483:web:8fd3feebf30803ac19be66",
-  measurementId: "G-BNMMF9YHSP",
+  apiKey: "AIzaSyCyKjOpPq9UR4d1FOQvzO05v4i3C2Q9P8o",
+  authDomain: "fir-hackathon-98bf5.firebaseapp.com",
+  databaseURL:
+    "https://fir-hackathon-98bf5-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "fir-hackathon-98bf5",
+  storageBucket: "fir-hackathon-98bf5.firebasestorage.app",
+  messagingSenderId: "121314874160",
+  appId: "1:121314874160:web:1cc14e6fbe7992b103aef5",
+  measurementId: "G-TDE2Q68S40",
 };
 
 // Initialize Firebase
@@ -24,11 +27,14 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication
 const auth = getAuth(app);
 
+// Initialize Realtime Database
+const db = getDatabase(app);
+
 // Initialize Analytics (optional - chỉ chạy trên production)
 let analytics = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   analytics = getAnalytics(app);
 }
 
-export { app, auth, analytics };
+export { app, auth, db, analytics };
 export default app;
