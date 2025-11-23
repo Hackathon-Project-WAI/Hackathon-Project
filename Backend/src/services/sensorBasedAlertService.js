@@ -400,10 +400,27 @@ class SensorBasedAlertService {
       const hasWater = waterLevelCm > 0; // Có nước dù chưa vượt ngưỡng
 
       // ⭐ QUAN TRỌNG: Gửi cảnh báo nếu location nằm trong bán kính sensor VÀ có dấu hiệu ngập
-      // Đặc biệt: Mock data (flood prone areas) luôn cảnh báo nếu trong bán kính
+      // Logic:
+      // 1. Mực nước >= ngưỡng của user (exceedsThreshold), HOẶC
+      // 2. Trạng thái cảnh báo (DANGER, CRITICAL, ALERT) - bất kể mực nước, HOẶC
+      // 3. WARNING + có nước > 0 - nhưng chỉ nếu mực nước >= ngưỡng hoặc là mock data với riskLevel high
+      // ⚠️ QUAN TRỌNG: Mock data cũng phải tuân theo ngưỡng của user, không phải luôn cảnh báo
+      const isCriticalStatus = ["DANGER", "CRITICAL", "ALERT"].includes(
+        floodStatus.toUpperCase()
+      );
+      const isWarningStatus = floodStatus.toUpperCase() === "WARNING";
+
+      // Mock data với riskLevel high: cảnh báo nếu trong bán kính và (vượt ngưỡng HOẶC trạng thái nguy hiểm)
+      const isHighRiskMock =
+        isMockData &&
+        (sensorData.riskLevel === "high" || sensorData.riskLevel === "HIGH");
+
       const shouldAlert =
         isInSensorRadius &&
-        (exceedsThreshold || isFloodAlerting || hasWater || isMockData); // Mock data luôn cảnh báo nếu trong bán kính
+        (exceedsThreshold || // Mực nước >= ngưỡng của user
+          isCriticalStatus || // Trạng thái nguy hiểm (DANGER, CRITICAL, ALERT) - bất kể mực nước
+          (isWarningStatus && exceedsThreshold) || // WARNING + vượt ngưỡng
+          (isHighRiskMock && exceedsThreshold)); // Mock data high risk + vượt ngưỡng
 
       // ✅ Log chi tiết điều kiện check
       console.log(
@@ -413,6 +430,8 @@ class SensorBasedAlertService {
           `exceedsThreshold=${exceedsThreshold} (${waterLevelCm}cm >= ${waterLevelThresholdCm}cm), ` +
           `hasWater=${hasWater} (${waterLevelCm}cm > 0), ` +
           `isMockData=${isMockData}, ` +
+          `isCriticalStatus=${isCriticalStatus}, ` +
+          `isHighRiskMock=${isHighRiskMock}, ` +
           `shouldAlert=${shouldAlert}`
       );
 
