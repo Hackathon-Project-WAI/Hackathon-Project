@@ -11,14 +11,14 @@ class SensorBasedAlertService {
   }
   /**
    * Lấy tất cả sensor data từ Firebase
-   * Đọc từ CẢ 3 nguồn: sensors, iotData, và flood_zones (mock data)
+   * Đọc từ sensors (sensor data chính) và flood_zones (mock data)
    */
   async getAllSensors() {
     try {
       const db = admin.database();
       const allSensors = {};
 
-      // 1. Đọc từ sensors (sensor data chính)
+      // 1. Đọc từ sensors (sensor data chính) - như trong ảnh Firebase
       try {
         const sensorsRef = db.ref("sensors");
         const sensorsSnapshot = await sensorsRef.once("value");
@@ -34,7 +34,7 @@ class SensorBasedAlertService {
             ) {
               allSensors[sensorId] = {
                 ...sensorData,
-                source: sensorData.source || "sensors", // Đảm bảo có source
+                source: "sensors", // Đảm bảo có source
                 // ✅ Đảm bảo có cả latitude/longitude và lat/lon
                 latitude: sensorData.latitude || sensorData.lat,
                 longitude: sensorData.longitude || sensorData.lon,
@@ -67,30 +67,7 @@ class SensorBasedAlertService {
         console.error("⚠️ Lỗi đọc /sensors:", error.message);
       }
 
-      // 2. Đọc từ iotData (IoT sensor data)
-      try {
-        const iotDataRef = db.ref("iotData");
-        const iotSnapshot = await iotDataRef.once("value");
-        if (iotSnapshot.exists()) {
-          const iotData = iotSnapshot.val();
-          // Merge vào allSensors, prefix với "iot_" để tránh conflict
-          for (const [sensorId, data] of Object.entries(iotData)) {
-            allSensors[`iot_${sensorId}`] = {
-              ...data,
-              source: "iotData",
-              // ✅ Bán kính ảnh hưởng của IoT sensor (mặc định 1000m nếu không có)
-              radius: data.radius || 1000,
-            };
-          }
-          console.log(
-            `📡 Đọc ${Object.keys(iotData).length} sensors từ /iotData`
-          );
-        }
-      } catch (error) {
-        console.error("⚠️ Lỗi đọc /iotData:", error.message);
-      }
-
-      // 3. Đọc từ flood_zones (mock data từ Firebase - vùng ngập cố định)
+      // 2. Đọc từ flood_zones (mock data từ Firebase - vùng ngập cố định)
       try {
         const floodZonesRef = db.ref("flood_zones");
         const floodZonesSnapshot = await floodZonesRef.once("value");
@@ -185,7 +162,7 @@ class SensorBasedAlertService {
 
       const totalSensors = Object.keys(allSensors).length;
       console.log(
-        `✅ Tổng cộng: ${totalSensors} sensors từ tất cả nguồn (sensors + iotData + flood_zones)`
+        `✅ Tổng cộng: ${totalSensors} sensors từ tất cả nguồn (sensors + flood_zones + floodProneAreas.json)`
       );
 
       return allSensors;
@@ -368,26 +345,37 @@ class SensorBasedAlertService {
       // ✅ QUAN TRỌNG: Dùng BÁN KÍNH CỦA SENSOR/MOCK DATA để check, không dùng alertRadius của location
       // Logic: Check xem location có nằm trong bán kính ảnh hưởng của sensor/mock data không
       // - Mock data: dùng radius từ zone.radius (mặc định 500m)
-      // - Sensor: dùng radius từ sensorData.radius (nếu có), nếu không có thì dùng mặc định 1000m
+      // - Sensor thực tế (sensors): LUÔN có bán kính tối thiểu 1000m
       // - Flood zones: dùng radius từ zoneData.radius (nếu có), nếu không có thì dùng mặc định 1000m
 
       let sensorRadius;
-      if (sensorData.radius !== undefined && sensorData.radius !== null) {
-        // Sensor/mock data có radius riêng
-        sensorRadius = parseFloat(sensorData.radius);
-      } else if (sensorData.source === "floodProneAreas_json") {
-        // Mock data từ JSON: mặc định 500m
-        sensorRadius = 500;
+      if (sensorData.source === "floodProneAreas_json") {
+        // Mock data từ JSON: dùng radius từ zone.radius hoặc mặc định 500m
+        sensorRadius = sensorData.radius ? parseFloat(sensorData.radius) : 500;
       } else if (sensorData.source === "flood_zones") {
-        // Flood zones từ Firebase: mặc định 1000m
-        sensorRadius = 1000;
+        // Flood zones từ Firebase: dùng radius từ zoneData.radius hoặc mặc định 1000m
+        sensorRadius = sensorData.radius ? parseFloat(sensorData.radius) : 1000;
       } else {
-        // Sensor thực tế: mặc định 1000m (1km)
-        sensorRadius = 1000;
+        // Sensor thực tế (sensors, iotData): LUÔN có bán kính tối thiểu 1000m
+        if (sensorData.radius !== undefined && sensorData.radius !== null) {
+          const parsedRadius = parseFloat(sensorData.radius);
+          // Nếu radius < 1000m, nâng lên 1000m cho sensor thực tế
+          sensorRadius = parsedRadius > 0 ? Math.max(parsedRadius, 1000) : 1000;
+        } else {
+          // Không có radius → mặc định 1000m
+          sensorRadius = 1000;
+        }
       }
 
       // ✅ Check: location có nằm trong bán kính ảnh hưởng của sensor/mock data không
       const isInSensorRadius = distanceMeters <= sensorRadius;
+
+      // ✅ Log bán kính sensor để debug
+      if (sensorData.source === "sensors") {
+        console.log(
+          `   📡 Sensor thực tế ${sensorId} (${sensorData.source}): bán kính = ${sensorRadius}m`
+        );
+      }
 
       const isMockData = sensorData.source === "floodProneAreas_json";
       const isFloodAlerting = [
